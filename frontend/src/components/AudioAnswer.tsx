@@ -282,6 +282,9 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
       <label><input type="checkbox" checked={transcript.enabled} disabled={isBusy || locked || !transcript.supported} aria-describedby={`speech-info-${questionId}`} onChange={event => transcript.setEnabled(event.target.checked)} /> Konuşmayı otomatik metne çevir (Türkçe)</label>
       <p id={`speech-info-${questionId}`}>{transcript.supported ? 'İsteğe bağlıdır. Tarayıcının tanıma hizmeti sesi harici bir servise gönderebilir; internet gerekebilir. Kayıt başlamadan önce seçin.' : 'Bu tarayıcıda otomatik metin desteklenmiyor. Ses kaydedebilir ve yanıt metnini elle yazabilirsiniz.'}</p>
     </div>
+    <div className="speech-status" role="status" aria-live="polite"><strong>Metne çevirme: {transcript.statusLabel}</strong><p>{transcript.notice}</p>
+      {phase === 'recording' && transcript.enabled && transcript.supported && <><button type="button" className="secondary" onClick={() => transcript.retry()}>Metne çevirmeyi tekrar başlat</button><p>Bu düğme Chrome'un varsayılan mikrofonuyla tanımayı yeniden başlatır; mevcut metin korunur.</p></>}
+    </div>
     <div className="recording-top"><span className={phase === 'recording' ? 'record-state active' : 'record-state'}>{phase === 'recording' ? '● Kayıtta' : 'Sesli yanıt'}</span><span className="timer" aria-label="Kayıt süresi">{clock(elapsed)} / {clock(maxSeconds)}</span></div>
     <progress value={elapsed} max={maxSeconds} aria-label="Yanıt süresi" />
     <div className="record-actions">
@@ -299,7 +302,7 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
       <label htmlFor={`transcript-${questionId}`}>Yanıt metni {transcript.listening && <span>· Canlı taslak</span>}</label>
       <textarea id={`transcript-${questionId}`} value={transcript.text} readOnly={isBusy || locked} maxLength={12000} rows={5} placeholder="Otomatik metin burada görünür. Yanıtınızı elle de yazabilirsiniz." aria-describedby={`transcript-help-${questionId}`} onChange={event => transcript.setText(event.target.value)} />
       <p id={`transcript-help-${questionId}`}>Kayıt sırasında metin düzenlenmez. Kaydı durdurduktan sonra sesinizi dinleyip hataları düzeltin. Yeniden kayıt başlarsa mevcut metin sıfırlanır.</p>
-      {transcript.notice && <p className="transcript-notice" role="status">{transcript.notice}</p>}
+
       <div className="text-actions"><small>{transcript.text.length.toLocaleString('tr-TR')} karakter · Kaydetmeden önce geçici taslak</small><button type="button" className="secondary" disabled={isBusy || locked || !transcript.text} onClick={() => transcript.reset()}>Metni temizle</button></div>
     </div>
     <div className="save-answer"><button type="button" disabled={isBusy || locked || !sessionToken || !transcript.text.trim() || (!recording && !savedAnswer)} onClick={save}>{saving ? 'Kaydediliyor…' : 'Yanıtı kaydet'}</button><p>Ses ve kontrol ettiğiniz metin birlikte kaydedilir. Kayıtlı yanıtın yalnızca metnini de güncelleyebilirsiniz.</p>

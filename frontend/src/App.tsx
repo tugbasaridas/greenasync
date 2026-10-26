@@ -40,7 +40,7 @@ export default function App() {
     } finally { setLoading(false); }
   }
   return <main>
-    <header><a className="brand" href="/">GreenAsync<span>●</span></a><span className="badge">Geliştirme sürümü · 0.4.1</span></header>
+    <header><a className="brand" href="/">GreenAsync<span>●</span></a><span className="badge">Geliştirme sürümü · 0.4.2</span></header>
     <section className="hero">
       <p className="eyebrow">DAHA YEŞİL İŞE ALIM</p>
       <h1>Yanıta odaklan.<br /><span>Veri yükünü azalt.</span></h1>

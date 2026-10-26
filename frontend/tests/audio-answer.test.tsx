@@ -55,6 +55,7 @@ beforeEach(async () => {
   delete (window as any).SpeechRecognition;
   delete (window as any).webkitSpeechRecognition;
   speechStartThrows = false;
+  speechNoEvents = false;
   globalThis.fetch = originalFetch;
   delete (window as any).AudioContext;
   delete (navigator.mediaDevices as any).enumerateDevices;
@@ -137,6 +138,7 @@ test('failed re-record permission preserves previous recording', async () => {
 
 let speech: FakeSpeech;
 let speechStartThrows = false;
+let speechNoEvents = false;
 class FakeSpeech implements SpeechEngine {
   lang = '';
   continuous = false;
@@ -150,7 +152,7 @@ class FakeSpeech implements SpeechEngine {
   onstart: SpeechEngine['onstart'] = null;
   inputTrack?: MediaStreamTrack;
   constructor() { speech = this; }
-  start(track?: MediaStreamTrack) { if (speechStartThrows) throw new Error('unavailable'); this.inputTrack = track; this.started = true; this.onstart?.(); }
+  start(track?: MediaStreamTrack) { if (speechStartThrows) throw new Error('unavailable'); this.inputTrack = track; this.started = true; if (!speechNoEvents) this.onstart?.(); }
   abort() { this.aborted = true; }
   result(...segments: [string, boolean][]) {
     const results = segments.map(([text, final]) => Object.assign([{ transcript: text }], { isFinal: final }));
@@ -228,6 +230,7 @@ test('speech start failure or early end does not stop audio', async () => {
   assert.ok(container.textContent?.includes('Otomatik metin başlatılamadı'));
   await click('Kaydı durdur');
   speechStartThrows = false;
+  speechNoEvents = false;
   globalThis.fetch = originalFetch;
   delete (window as any).AudioContext;
   delete (navigator.mediaDevices as any).enumerateDevices;
@@ -345,4 +348,37 @@ test('detected input signal moves the meter and avoids silence warning', async (
   await click('Kaydı durdur');
   assert.ok(!container.textContent?.includes('mikrofon girişinde ses algılanmadı'));
   assert.equal(closed(), true);
+});
+
+test('speech status is visible before recording and immediately on opt-in', async () => {
+  supportSpeech(); await mount();
+  assert.ok(container.textContent?.includes('Metne çevirme: Kapalı'));
+  await enableTranscript();
+  assert.ok(container.textContent?.includes('Metne çevirme: Hazır'));
+  assert.ok(container.textContent?.includes('Otomatik metin seçildi'));
+});
+test('direct user retry uses the default microphone and preserves existing words', async () => {
+  supportSpeech(); await mount(); await enableTranscript(); await click('Kaydı başlat');
+  await act(async () => { speech.result(['İlk bölüm', true]); });
+  const oldEngine = speech;
+  await click('Metne çevirmeyi tekrar başlat');
+  assert.equal(oldEngine.aborted, true);
+  assert.equal(speech.inputTrack, undefined);
+  assert.equal(current.state, 'recording');
+  assert.equal(editor().value, 'İlk bölüm');
+  await act(async () => { speech.result(['İkinci bölüm', true]); });
+  assert.equal(editor().value, 'İlk bölüm İkinci bölüm');
+  await click('Kaydı durdur');
+});
+test('a silent startup timeout produces an actionable message without stopping audio', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  speechNoEvents = true;
+  supportSpeech(); await mount(); await enableTranscript(); await click('Kaydı başlat');
+  assert.ok(container.textContent?.includes('Metne çevirme: Başlatılıyor'));
+  await act(async () => { t.mock.timers.tick(8001); });
+  assert.ok(container.textContent?.includes('Tanıma hizmeti 8 saniye içinde başlamadı'));
+  assert.equal(speech.aborted, true);
+  assert.equal(current.state, 'recording');
+  assert.equal(streams[0].track.readyState, 'live');
+  await click('Kaydı durdur');
 });

@@ -86,3 +86,14 @@ istemci bildirimidir. Bu sürüm internete açık üretim kullanımı için haz�
 - Hata varsa tanıma kodu ve Chrome sürümünü not edin.
 - Otomatik testler sahte giriş verileriyle cihaz seçimini, sessizliği ve
   kayıt sonrası analiz kaynağının kapatılmasını sınar; fiziksel mikrofonu sınamaz.
+
+## Görünür tanıma durumu (0.4.2)
+
+- Kayıt başlamadan Metne çevirme: Kapalı/Hazır durumu görünmeli.
+- Otomatik metin kutusunu seçince durum mesajı hemen değişmeli.
+- Kayıt sırasında tekrar başlat düğmesine basınca tanıma yeniden denenmeli.
+- Önceki metin korunmalı; yeni sonuçlar arkasına eklenmeli.
+- Hizmet start/result/error/end olayı göndermeden kalırsa 8 saniyede hata
+  görünmeli ve ses kaydı devam etmeli.
+- Bu adımlar taklit medya API'leriyle otomatik olarak sınanır; gerçek
+  Chrome tanıma hizmetine bağlantı başarısı kullanıcı cihazında sınanmalıdır.

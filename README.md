@@ -10,10 +10,13 @@ adayın kontrolünden sonra sesle birlikte kaydedilir. İK önce yalnızca metni
 görür; ses yalnızca Dinle veya İndir seçilirse aktarılır. Ses sunucuda
 saklanır; dinlenmemesi sunucudaki depolamayı ortadan kaldırmaz.
 
-## Mevcut sürüm: 0.4.1 — mikrofon seçimi ve ses kontrolü
+## Mevcut sürüm: 0.4.2 — görünür tanıma durumu ve elle yeniden deneme
 
 - Soru bazında ses kaydı ve isteğe bağlı Türkçe otomatik metin.
 - Giriş mikrofonu seçimi ve yalnızca kayıt sırasında çalışan seviye göstergesi.
+- Kayıt düğmesinin üstünde her zaman görünen otomatik metin durumu.
+- Kayıt sırasında doğrudan tıklamayla tanımayı yeniden başlatma; eski metni koruma.
+- Tanıma başlamazsa 8 saniye sonunda açıklayıcı hata; ses kaydı devam eder.
 - Düşük/sessiz giriş, oynatma sorunu ve tanıma hata kodlarını gösterme.
 - Destekleyen tarayıcıda kayıt ve tanıma için aynı ses izini kullanma.
 - Kayıttan sonra metni kontrol edip “Yanıtı kaydet” ile kalıcı gönderme.
@@ -181,3 +184,16 @@ Resmi yardım:
 - https://support.google.com/chrome/answer/2693767
 - https://support.microsoft.com/en-us/windows/hardware/drivers/how-to-set-up-and-test-microphones-in-windows
 - https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition/start
+
+### Metin alanı boş ve durum mesajı görünmüyorsa
+
+Ana sayfa sürümü 0.4.2 olmalı. Git pull sonrası Vite'ı yeniden başlatın ve
+tarayıcıda Ctrl+Shift+R ile yenileyin. Kayıt düğmesinin üstünde Metne çevirme
+durumu her zaman görünür: Kapalı, Hazır, Başlatılıyor, Dinliyor, Durduruldu
+veya Hata. Kayıt sırasında Metne çevirmeyi tekrar başlat düğmesi tanımayı
+doğrudan kullanıcı tıklamasıyla açar; bu denemede tarayıcının varsayılan
+mikrofonu kullanılır ve önceki kelimeler korunur. Otomatik yeniden başlatma
+döngüsü yoktur. Hizmet başlamazsa 8 saniye sonra hata gösterilir.
+
+Bu düzenleme tarayıcının harici tanıma hizmetine erişimini garanti etmez.
+Gerçek hizmetin yanıtı ve hata kodu kullanılan bilgisayarda kontrol edilmelidir.

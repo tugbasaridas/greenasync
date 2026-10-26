@@ -1,0 +1,16 @@
+{
+  "version": "0.4.2",
+  "scope": "Frontend assets only; no external speech service, energy or carbon measurement",
+  "files": [
+    {
+      "file": "index-DlWG7KRM.js",
+      "bytes": 248506,
+      "gzip_bytes": 77599
+    },
+    {
+      "file": "index-DqnKwOy2.css",
+      "bytes": 6723,
+      "gzip_bytes": 2002
+    }
+  ]
+}
