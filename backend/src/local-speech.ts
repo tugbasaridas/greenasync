@@ -20,7 +20,7 @@ export class LocalSpeech implements OnModuleDestroy {
     if (this.ready) return this.ready;
     const root = resolve(__dirname, '../..');
     const python = process.env.WHISPER_PYTHON || join(root, '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
-    const child = spawn(python, [join(root, 'backend/speech/worker.py')], { cwd: root, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+    const child = spawn(python, [join(root, 'backend/speech/worker.py')], { cwd: root, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true, env: { ...process.env, PYTHONUTF8: '1', PYTHONUNBUFFERED: '1' } });
     this.child = child;
     this.ready = new Promise<void>((resolveReady, rejectReady) => {
       const startupTimeout = setTimeout(() => fail(), 120000);
