@@ -10,14 +10,18 @@ adayın kontrolünden sonra sesle birlikte kaydedilir. İK önce yalnızca metni
 görür; ses yalnızca Dinle veya İndir seçilirse aktarılır. Ses sunucuda
 saklanır; dinlenmemesi sunucudaki depolamayı ortadan kaldırmaz.
 
-## Mevcut sürüm: 0.1.0 — başlangıç kurulumu
+## Mevcut sürüm: 0.2.0 — aday ses kaydı
 
-Çalışanlar: React ana sayfası, NestJS sağlık kontrolü, API üzerinden üç demo
-sorusunu getirme, responsive görünüm, build iş akışı ve ölçüm planı.
+Çalışanlar: React ana sayfası, NestJS API üzerinden üç demo sorusu, her soru
+için mikrofonla kayıt, otomatik süre sınırı, durdurma, dinleme, indirme ve silme.
+Aynı anda tek soruda kayıt yapılır. Kayıt durduğunda mikrofon izleri kapatılır.
+İzin reddi, izin isteğini iptal etme ve tarayıcı destek kontrolü bulunur.
 
-**Ses kaydı, otomatik metin, başvuru gönderimi, İK girişi ve veritabanı
-bağlantısı henüz uygulanmadı.** PostgreSQL için yalnızca yerel Docker
-hazırlığı bulunuyor. Henüz tasarruf veya karbon sonucu ölçülmedi.
+**Bu aşamada sesler yalnızca açık tarayıcı sekmesinin belleğinde tutulur. Sayfa
+yenilenirse kaybolur; ses sunucuya gönderilmez.** Otomatik metin, başvuru
+gönderimi, İK girişi ve veritabanı bağlantısı henüz uygulanmadı. PostgreSQL
+için yalnızca yerel Docker hazırlığı bulunuyor. Henüz tasarruf veya karbon
+sonucu ölçülmedi.
 
 ## Gereksinimler
 
@@ -47,11 +51,15 @@ npm run dev:frontend
 
 Tarayıcı: http://localhost:5173
 
-“Demo sorularını getir” düğmesi backend bağlantısını doğrular.
+“Demo mülakatını aç” düğmesi soruları getirir. Bir soruda “Kaydı başlat” ile
+mikrofon izni verin; konuşup “Kaydı durdur” ile önizlemeyi açın. Kayıt
+süre sınırında otomatik durur. Yeniden kayıt başarılı başladığında önceki
+yanıtın yerini alır. Mikrofon için localhost veya HTTPS gerekir.
 Sağlık kontrolü: http://localhost:3000/api/health
 Vite /api isteklerini yerel NestJS sunucusuna yönlendirir.
 
 ```bash
+npm test
 npm run typecheck
 npm run build
 ```
@@ -67,9 +75,11 @@ kalır. Bu aşamada API henüz veritabanına bağlanmaz.
 
 ## Yeşil yazılım kararları
 
-- Video yerine sıkıştırılmış ses ve metin (uygulanacak).
+- Kamera açılmadan ses kaydı; mono ve 32 kbps hedefi (tarayıcı gerçek ayarları değiştirebilir).
+- Otomatik metin ve sunucuda saklama (uygulanacak).
 - Metin öncelikli inceleme ve isteğe bağlı ses aktarımı (uygulanacak).
-- Sınırlı kayıt süresi ve eski kayıtları silme (uygulanacak).
+- Sınırlı kayıt süresi ve durdurunca mikrofonu kapatma.
+- Sunucudaki eski kayıtları silme (uygulanacak).
 - Ana sayfada harici font, video, görsel paketi ve takip betiği kullanılmaması.
 - Polling yerine kullanıcının isteğiyle soru getirme.
 - Ölçümle doğrulanmayan tasarruf yüzdesi sunulmaması.
@@ -86,3 +96,9 @@ Konuşma tanıma tarayıcıya göre uzak servis kullanabilir; cihaz üstü veya
 
 Gerçek aday bilgileri, ses dosyaları ve .env GitHub'a yüklenmemelidir.
 GitHub kodu saklar; kalıcı ses depolama ve HTTPS uygulama yayını ayrıca kurulacak.
+
+## Doğrulama
+
+`npm test` kayıt yaşam döngüsünü taklit edilmiş medya API'leriyle sınar.
+Gerçek mikrofon, codec, ses kalitesi ve tarayıcı uyumluluğu için
+[elle kontrol listesi](docs/RECORDING-QA.md) uygulanmalıdır.

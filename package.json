@@ -1,7 +1,7 @@
 {
   "name": "greenasync",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "workspaces": [
     "frontend",
     "backend"
@@ -13,6 +13,7 @@
     "dev:frontend": "npm run dev --workspace frontend",
     "dev:backend": "npm run start:dev --workspace backend",
     "build": "npm run build --workspaces",
-    "typecheck": "npm run typecheck --workspaces"
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test --workspaces --if-present"
   }
 }

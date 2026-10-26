@@ -13,6 +13,10 @@ ek kütüphaneler eklenmez. TypeScript JavaScript olarak derlenir.
 - Polling yok; sorular yalnızca kullanıcı düğmeye bastığında getirilir.
 - Tek NestJS uygulaması; gereksiz mikroservis ve sürekli bağlantı yok.
 - Takip ve analiz betiği yok.
+- Video izni istenmeden ses kaydı; 32 kbps ve mono hedeflenir.
+- Kayıt durunca mikrofon izleri kapatılır; zamanlayıcılar temizlenir.
+- Silme ve yeniden kayıtta geçersiz Blob adresleri serbest bırakılır.
+- Ses kayıtları bu sürümde sunucuya gönderilmez.
 
 ## Geliştirme hedefleri
 

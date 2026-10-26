@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "scope": "Frontend production assets only; no energy or CO2 measurement",
+  "files": [
+    {
+      "file": "index-BCMWon3-.css",
+      "bytes": 4022,
+      "gzip_bytes": 1448
+    },
+    {
+      "file": "index-DRmMjnip.js",
+      "bytes": 233515,
+      "gzip_bytes": 72958
+    }
+  ]
+}

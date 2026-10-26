@@ -3,7 +3,7 @@
 - [x] React + TypeScript + Vite ve NestJS başlangıcı
 - [x] API sağlık kontrolü ve üç örnek soru
 - [x] Responsive ana sayfa ve API bağlantısı
-- [ ] Mikrofonla kayıt, süre sınırı, önizleme ve mikrofonu kapatma
+- [x] Mikrofonla kayıt, süre sınırı, önizleme ve mikrofonu kapatma
 - [ ] Türkçe konuşmayı metne dönüştürme, destek kontrolü ve elle düzeltme
 - [ ] PostgreSQL modelleri ve migration; gerçek veritabanı bağlantısı
 - [ ] Kalıcı dosya alanı ve ses/metin gönderimi
