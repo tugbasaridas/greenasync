@@ -1,0 +1,37 @@
+# Yeşil yazılım tasarım kararları
+
+Teknoloji seçimi tek başına enerji verimliliği kanıtı değildir. React ve NestJS
+ile veri, istek ve işlem miktarını azaltmaya odaklanıyoruz. Bu proje etkileşimli
+kayıt ve İK ekranları gerektirdiği için React kullanır; statik sayfalara gereksiz
+ek kütüphaneler eklenmez. TypeScript JavaScript olarak derlenir.
+
+## Başlangıçta uygulananlar
+
+- Sistem fontları; harici font isteği yok.
+- Görsel/video arka planı, otomatik oynatma ve animasyon kütüphanesi yok.
+- Arayüz için ek bileşen veya ikon paketi yok.
+- Polling yok; sorular yalnızca kullanıcı düğmeye bastığında getirilir.
+- Tek NestJS uygulaması; gereksiz mikroservis ve sürekli bağlantı yok.
+- Takip ve analiz betiği yok.
+
+## Geliştirme hedefleri
+
+- İlk sayfa için JS + CSS sıkıştırılmış toplamı 100 KB altında hedeflenir.
+  Bu bir performans bütçesidir, ölçülmüş enerji sonucu değildir.
+- İK metin ekranında ses istek sayısı 0 olmalı.
+- Ses yalnızca Dinle/İndir ile getirilmeli; mikrofon yalnızca kayıtta açık olmalı.
+- Sorgular yalnızca gerekli alanları almalı; listeleme sayfalanmalı.
+- Sürüm hashli statik dosyalar uygun önbellek başlıklarıyla sunulmalı.
+  Özel başvuru ve sesler herkese açık önbelleğe alınmamalı.
+- Gereksiz tekrar render ve zamanlayıcılar önlenmeli.
+- Saklama süresi sonunda sesler temizlenmeli; gerçek kayıtlar git dışında kalmalı.
+- Küçük ve ihtiyaca uygun sunucu kullanılmalı; yayın kararı ölçümlerle verilmeli.
+
+## Doğrulama
+
+Üretim build boyutu, Network paneli, Lighthouse ve Ecograder sonuçları
+kaydedilecek. Veri azalması, enerji azalması ve model tabanlı CO2 tahmini
+birbirinden ayrı ifade edilecek. Koyu/yeşil renk kullanmak tek başına tasarruf
+kanıtı sayılmayacak.
+
+Rehber: https://www.w3.org/TR/web-sustainability-guidelines/

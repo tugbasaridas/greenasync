@@ -1,0 +1,15 @@
+{
+  "scope": "Frontend production assets only; no energy or CO2 measurement",
+  "files": [
+    {
+      "file": "index-BpBBepRi.css",
+      "bytes": 2278,
+      "gzip_bytes": 946
+    },
+    {
+      "file": "index-B9DpOVbu.js",
+      "bytes": 226954,
+      "gzip_bytes": 70605
+    }
+  ]
+}
