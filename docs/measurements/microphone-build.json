@@ -1,0 +1,16 @@
+{
+  "version": "0.4.1",
+  "scope": "Frontend assets only; excludes audio and recognition service costs; not energy or carbon measurement",
+  "files": [
+    {
+      "file": "index-ClK3sRyL.js",
+      "bytes": 246627,
+      "gzip_bytes": 77113
+    },
+    {
+      "file": "index-wy3GJ7K5.css",
+      "bytes": 6397,
+      "gzip_bytes": 1930
+    }
+  ]
+}

@@ -13,11 +13,13 @@ export default function App() {
   async function loadDemo() {
     setLoading(true);
     setStatus('Sunucuya bağlanılıyor…');
+    let demoLoaded = false;
     try {
       const response = await fetch('/api/questions');
       if (!response.ok) throw new Error('API response failed');
       const data = await response.json() as Question[];
       setQuestions(data);
+      demoLoaded = true;
       setStatus('Sorular hazır. Kalıcı kayıt bağlantısı kontrol ediliyor…');
       let token = sessionToken;
       let canRestore = true;
@@ -34,11 +36,11 @@ export default function App() {
       setAnswers(stored);
       setStatus(canRestore ? 'Başvurunuz hazır. Kaydedilen yanıtlar sayfa yenilense de aynı tarayıcıdan açılabilir.' : 'Başvurunuz hazır ancak tarayıcı erişim anahtarını saklayamıyor. Sekme kapanırsa başvuruya tekrar erişemeyebilirsiniz.');
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Bağlantı kurulamadı. Backend ve veritabanını kontrol edin.');
+      setStatus((demoLoaded ? 'Sorular hazır; ses ve metin denemesini yapabilirsiniz. Kalıcı kayıt bağlantısı kurulamadı: ' : '') + (error instanceof Error ? error.message : 'Backend bağlantısını kontrol edin.'));
     } finally { setLoading(false); }
   }
   return <main>
-    <header><a className="brand" href="/">GreenAsync<span>●</span></a><span className="badge">Geliştirme sürümü · 0.4</span></header>
+    <header><a className="brand" href="/">GreenAsync<span>●</span></a><span className="badge">Geliştirme sürümü · 0.4.1</span></header>
     <section className="hero">
       <p className="eyebrow">DAHA YEŞİL İŞE ALIM</p>
       <h1>Yanıta odaklan.<br /><span>Veri yükünü azalt.</span></h1>

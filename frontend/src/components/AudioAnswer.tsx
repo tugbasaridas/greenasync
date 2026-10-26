@@ -9,6 +9,7 @@ const clock = (seconds: number) => `${Math.floor(seconds / 60).toString().padSta
 function permissionMessage(error: unknown) {
   const name = error instanceof DOMException ? error.name : '';
   if (name === 'NotAllowedError' || name === 'SecurityError') return 'Mikrofon izni verilmedi. Tarayıcının site izinlerinden mikrofonu açıp tekrar deneyin.';
+  if (name === 'OverconstrainedError') return 'Seçilen mikrofon artık kullanılamıyor. Sistem varsayılanını seçin veya mikrofon listesini yenileyin.';
   if (name === 'NotFoundError') return 'Mikrofon bulunamadı. Bir mikrofon bağlayıp tekrar deneyin.';
   if (name === 'NotReadableError') return 'Mikrofona erişilemiyor. Başka bir uygulamanın kullanıp kullanmadığını kontrol edin.';
   return 'Ses kaydı başlatılamadı. Mikrofonu ve tarayıcı desteğini kontrol edip tekrar deneyin.';
@@ -21,6 +22,15 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveNotice, setSaveNotice] = useState('');
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [deviceId, setDeviceId] = useState('');
+  const [deviceNotice, setDeviceNotice] = useState('');
+  const [inputLabel, setInputLabel] = useState('');
+  const [inputLevel, setInputLevel] = useState(0);
+  const [signalNotice, setSignalNotice] = useState('');
+  const meter = useRef<{ context: AudioContext; source: MediaStreamAudioSourceNode; analyser: AnalyserNode; values: Uint8Array<ArrayBuffer> } | null>(null);
+  const signalDetected = useRef(false);
+  const signalMeasured = useRef(false);
   const alive = useRef(true);
   const generation = useRef(0);
   const busy = useRef(false);
@@ -40,6 +50,12 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
     if (deadline.current) clearTimeout(deadline.current);
     interval.current = null;
     deadline.current = null;
+    if (meter.current) {
+      meter.current.source.disconnect();
+      meter.current.analyser.disconnect();
+      void meter.current.context.close().catch(() => {});
+      meter.current = null;
+    }
     stream.current?.getTracks().forEach(track => track.stop());
     stream.current = null;
   }
@@ -59,7 +75,7 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
     elapsedRef.current = Math.min((performance.now() - started.current) / 1000, maxSeconds);
     setElapsed(elapsedRef.current);
     setPhase('stopping');
-    setMessage(reason);
+    setMessage(signalMeasured.current && !signalDetected.current ? 'Kayıt oluştu ancak mikrofon girişinde ses algılanmadı. Mikrofon seçimini, fiziksel sessiz düğmesini ve Windows giriş sesini kontrol edip tekrar kaydedin.' : reason);
     transcript.stop();
     current.stop();
     // Stopping the recorder alone does not release the microphone tracks.
@@ -83,6 +99,40 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
   }, []);
   useEffect(() => { if (locked) audio.current?.pause(); }, [locked]);
 
+  async function listMicrophones() {
+    if (!navigator.mediaDevices?.enumerateDevices) {
+      setDeviceNotice('Mikrofon listesi bu tarayıcıda kullanılamıyor. Chrome site ayarlarından giriş cihazını seçin.');
+      return;
+    }
+    try {
+      const inputs = (await navigator.mediaDevices.enumerateDevices()).filter(device => device.kind === 'audioinput' && device.deviceId && device.deviceId !== 'default');
+      if (!alive.current) return;
+      setDevices(inputs);
+      setDeviceNotice(inputs.some(device => device.label) ? 'Kullanacağınız mikrofonu seçip yeni bir kayıt başlatın.' : 'Cihaz adları izin verildikten sonra görünür. Kaydı bir kez başlatıp durdurun, sonra listeyi yenileyin.');
+    } catch { if (alive.current) setDeviceNotice('Mikrofonlar listelenemedi. Chrome mikrofon izinlerini kontrol edin.'); }
+  }
+  function setupMeter(input: MediaStream) {
+    signalDetected.current = false;
+    signalMeasured.current = false;
+    setInputLevel(0);
+    let context: AudioContext | undefined;
+    try {
+      const Context = window.AudioContext ?? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!Context) { setSignalNotice('Ses seviyesi bu tarayıcıda ölçülemiyor. Kayıt sonunda dinleyerek kontrol edin.'); return; }
+      context = new Context();
+      const source = context.createMediaStreamSource(input);
+      const analyser = context.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      meter.current = { context, source, analyser, values: new Uint8Array(analyser.fftSize) };
+      void context.resume().catch(() => {});
+      setSignalNotice('Konuşurken giriş seviyesi hareket etmeli. Canlı sesiniz hoparlöre verilmez; kaydı durdurunca dinleyebilirsiniz.');
+    } catch {
+      if (context) void context.close().catch(() => {});
+      meter.current = null;
+      setSignalNotice('Ses seviyesi ölçülemedi. Kayıt sonunda dinleyerek kontrol edin.');
+    }
+  }
   async function start() {
     if (locked || busy.current || saving) return;
     if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
@@ -97,7 +147,7 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
     audio.current?.pause();
     try {
       const input = await navigator.mediaDevices.getUserMedia({
-        audio: { channelCount: { ideal: 1 }, echoCancellation: true, noiseSuppression: true }, video: false,
+        audio: { ...(deviceId ? { deviceId: { exact: deviceId } } : {}), channelCount: { ideal: 1 } }, video: false,
       });
       // Permission can resolve after cancellation or navigation.
       if (!alive.current || attempt !== generation.current) {
@@ -105,6 +155,8 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
         return;
       }
       stream.current = input;
+      setInputLabel(input.getAudioTracks()[0]?.label || 'Varsayılan mikrofon');
+      void listMicrophones();
       const mimeType = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/mp4']
         .find(type => MediaRecorder.isTypeSupported(type));
       const current = new MediaRecorder(input, { ...(mimeType ? { mimeType } : {}), audioBitsPerSecond: 32000 });
@@ -151,7 +203,8 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
       current.start(1000);
       clearPreview();
       setSaveNotice('');
-      transcript.start();
+      setupMeter(input);
+      transcript.start(input.getAudioTracks()[0]);
       started.current = performance.now();
       elapsedRef.current = 0;
       setElapsed(0);
@@ -160,6 +213,17 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
       interval.current = setInterval(() => {
         const seconds = (performance.now() - started.current) / 1000;
         setElapsed(Math.min(seconds, maxSeconds));
+        const currentMeter = meter.current;
+        if (currentMeter?.context.state === 'running') {
+          currentMeter.analyser.getByteTimeDomainData(currentMeter.values);
+          const rms = Math.sqrt(currentMeter.values.reduce((total, value) => total + ((value - 128) / 128) ** 2, 0) / currentMeter.values.length);
+          signalMeasured.current = true;
+          if (rms > 0.005) signalDetected.current = true;
+          setInputLevel(Math.min(100, Math.round(rms * 400)));
+          if (seconds >= 3) setSignalNotice(signalDetected.current ? 'Mikrofon girişinde ses algılandı. Kayıt sonunda dinleyerek kontrol edin.' : 'Henüz ses algılanmadı. Konuşurken gösterge hareket etmiyorsa durdurup başka mikrofon seçin.');
+        } else if (seconds >= 3 && currentMeter) {
+          setSignalNotice('Ses seviyesi ölçümü başlatılamadı. Bu, kaydın sessiz olduğu anlamına gelmez; durdurup dinleyerek kontrol edin.');
+        }
         if (seconds >= maxSeconds) stop('Süre sınırına ulaşıldı. Kayıt durduruldu ve mikrofon kapatıldı.');
       }, 250);
       deadline.current = setTimeout(() => stop('Süre sınırına ulaşıldı. Kayıt durduruldu ve mikrofon kapatıldı.'), maxSeconds * 1000);
@@ -207,6 +271,13 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
   const isBusy = saving || phase === 'requesting' || phase === 'recording' || phase === 'stopping';
   const extension = recording?.mime.includes('mp4') ? 'm4a' : recording?.mime.includes('ogg') ? 'ogg' : 'webm';
   return <div className="answer-recorder">
+    <div className="microphone-settings">
+      <label htmlFor={`microphone-${questionId}`}>Giriş mikrofonu</label>
+      <div className="microphone-controls"><select id={`microphone-${questionId}`} disabled={isBusy || locked} value={deviceId} onChange={event => setDeviceId(event.target.value)}><option value="">Sistem varsayılanı</option>{devices.map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Mikrofon ${index + 1}`}</option>)}</select><button type="button" className="secondary" disabled={isBusy || locked} onClick={listMicrophones}>Mikrofon listesini yenile</button></div>
+      {deviceNotice && <p>{deviceNotice}</p>}
+      {inputLabel && <p>Kayıtta kullanılan cihaz: <strong>{inputLabel}</strong></p>}
+      {phase === 'recording' && <><label htmlFor={`input-level-${questionId}`}>Mikrofon giriş seviyesi</label><meter id={`input-level-${questionId}`} min={0} max={100} value={inputLevel} aria-label="Mikrofon giriş seviyesi" /><p role="status">{signalNotice}</p></>}
+    </div>
     <div className="transcript-option">
       <label><input type="checkbox" checked={transcript.enabled} disabled={isBusy || locked || !transcript.supported} aria-describedby={`speech-info-${questionId}`} onChange={event => transcript.setEnabled(event.target.checked)} /> Konuşmayı otomatik metne çevir (Türkçe)</label>
       <p id={`speech-info-${questionId}`}>{transcript.supported ? 'İsteğe bağlıdır. Tarayıcının tanıma hizmeti sesi harici bir servise gönderebilir; internet gerekebilir. Kayıt başlamadan önce seçin.' : 'Bu tarayıcıda otomatik metin desteklenmiyor. Ses kaydedebilir ve yanıt metnini elle yazabilirsiniz.'}</p>
@@ -221,7 +292,7 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
     </div>
     <p className="record-message" role="status">{message || (locked ? 'Başka bir soruda kayıt açık. Önce o kaydı tamamlayın.' : 'Kayıt başlatıldığında yalnızca mikrofon izni istenir.')}</p>
     {recording && !isBusy && <div className="record-preview">
-      <audio ref={audio} controls preload="none" src={recording.url} aria-label={`Soru ${questionId} sesli yanıtı`} onPlay={() => { if (locked) audio.current?.pause(); }} />
+      <audio ref={audio} controls preload="none" src={recording.url} aria-label={`Soru ${questionId} sesli yanıtı`} onPlay={() => { if (locked) audio.current?.pause(); }} onError={() => setMessage('Ses dosyası bu tarayıcıda oynatılamadı. Kaydı indirip açmayı deneyin veya daha uzun yeni bir kayıt oluşturun.')} />
       <div className="file-info"><span>{Math.max(1, Math.round(recording.duration))} sn · {(recording.bytes / 1024).toLocaleString('tr-TR', { maximumFractionDigits: 1 })} KB · {recording.mime.split(';')[0]}</span><a href={recording.url} download={`greenasync-soru-${questionId}.${extension}`}>Kaydı indir</a></div>
     </div>}
     <div className="transcript-editor">

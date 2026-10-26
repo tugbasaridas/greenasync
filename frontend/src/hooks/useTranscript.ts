@@ -12,7 +12,8 @@ export type SpeechEngine = {
   onresult: ((event: SpeechResultEvent) => void) | null;
   onerror: ((event: { error: string }) => void) | null;
   onend: (() => void) | null;
-  start: () => void;
+  onstart?: (() => void) | null;
+  start: (track?: MediaStreamTrack) => void;
   abort: () => void;
 };
 type SpeechConstructor = new () => SpeechEngine;
@@ -22,10 +23,10 @@ function constructor() {
 }
 function errorMessage(code: string) {
   if (code === 'not-allowed' || code === 'service-not-allowed') return 'Otomatik metin için izin verilmedi. Ses kaydı devam eder; metni sonrasında yazabilirsiniz.';
-  if (code === 'network') return 'Konuşma tanıma bağlantısı kesildi. Oluşan metin korundu; eksikleri sonrasında tamamlayabilirsiniz.';
+  if (code === 'network') return 'Tanıma hatası: network. Chrome konuşma tanıma hizmetine bağlanamadı. İnternet bağlantısını kontrol edin. Oluşan metin korundu; ses kaydı devam eder.';
   if (code === 'no-speech') return 'Konuşma algılanamadı. Ses kaydı devam eder; metni sonrasında yazabilirsiniz.';
   if (code === 'language-not-supported') return 'Bu tarayıcının tanıma hizmeti Türkçeyi desteklemiyor. Metni elle yazabilirsiniz.';
-  return 'Otomatik metin durdu. Ses kaydı devam eder; metni sonrasında kontrol edip tamamlayabilirsiniz.';
+  return `Otomatik metin durdu (hata: ${code}). Ses kaydı devam eder; metni sonrasında kontrol edip tamamlayabilirsiniz.`;
 }
 export default function useTranscript() {
   const [enabled, setEnabled] = useState(false);
@@ -41,6 +42,7 @@ export default function useTranscript() {
     const current = engine.current;
     engine.current = null;
     if (current) {
+      current.onstart = null;
       current.onresult = null;
       current.onerror = null;
       current.onend = null;
@@ -59,9 +61,9 @@ export default function useTranscript() {
     setText('');
     setNotice('');
   }
-  function start() {
+  function start(track?: MediaStreamTrack) {
     reset();
-    if (!enabled) return;
+    if (!enabled) { setNotice('Otomatik metin kapalı. Yazıya dönüşmesi için kayıttan önce yukarıdaki kutuyu işaretleyip yeniden kaydedin.'); return; }
     const Recognition = constructor();
     if (!Recognition) {
       setNotice('Bu tarayıcı otomatik metni desteklemiyor. Yanıtınızı aşağıya yazabilirsiniz.');
@@ -75,6 +77,11 @@ export default function useTranscript() {
       current.continuous = true;
       current.interimResults = true;
       current.maxAlternatives = 1;
+      current.onstart = () => {
+        if (attempt !== generation.current) return;
+        setListening(true);
+        setNotice('Konuşma tanıma başladı. Türkçe konuşabilirsiniz; metin henüz taslak.');
+      };
       current.onresult = event => {
         if (attempt !== generation.current) return;
         // Rebuild from the session's full result list: revised interim results
@@ -94,9 +101,15 @@ export default function useTranscript() {
         setListening(false);
         setNotice('Otomatik metin sona erdi. Ses kaydı devam edebilir; eksik kısmı kayıttan sonra tamamlayın.');
       };
-      current.start();
-      setListening(true);
-      setNotice('Konuşmanız Türkçe metne dönüştürülüyor. Bu metin henüz taslak.');
+      setNotice('Konuşma tanıma hizmeti başlatılıyor…');
+      try {
+        // Modern Chromium can transcribe the exact track used for recording.
+        current.start(track);
+      } catch (error) {
+        if (track && (error instanceof TypeError || (error instanceof DOMException && error.name === 'NotSupportedError'))) {
+          current.start();
+        } else { throw error; }
+      }
     } catch {
       dispose();
       setListening(false);

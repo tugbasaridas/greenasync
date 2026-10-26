@@ -10,9 +10,12 @@ adayın kontrolünden sonra sesle birlikte kaydedilir. İK önce yalnızca metni
 görür; ses yalnızca Dinle veya İndir seçilirse aktarılır. Ses sunucuda
 saklanır; dinlenmemesi sunucudaki depolamayı ortadan kaldırmaz.
 
-## Mevcut sürüm: 0.4.0 — kalıcı ses ve metin
+## Mevcut sürüm: 0.4.1 — mikrofon seçimi ve ses kontrolü
 
 - Soru bazında ses kaydı ve isteğe bağlı Türkçe otomatik metin.
+- Giriş mikrofonu seçimi ve yalnızca kayıt sırasında çalışan seviye göstergesi.
+- Düşük/sessiz giriş, oynatma sorunu ve tanıma hata kodlarını gösterme.
+- Destekleyen tarayıcıda kayıt ve tanıma için aynı ses izini kullanma.
 - Kayıttan sonra metni kontrol edip “Yanıtı kaydet” ile kalıcı gönderme.
 - Metin ve dosya bilgileri PostgreSQL'de, ses <repo>/uploads/audio içinde.
 - Yeniden açılışta aynı tarayıcıdaki başvurunun metinlerini getirme.
@@ -149,3 +152,32 @@ GitHub Actions, PostgreSQL 17 servisiyle aynı HTTP testlerini çalıştırır.
 Gerçek mikrofon ve konuşma tanıma doğruluğu otomatik olarak sınanmaz.
 Gerçek mikrofon, codec, ses kalitesi ve tarayıcı uyumluluğu için
 [elle kontrol listesi](docs/RECORDING-QA.md) uygulanmalıdır.
+
+## Kayıt sessiz veya metin oluşmuyor
+
+PostgreSQL, yerel ses kaydı ve konuşma tanıma için gerekli değildir. Veritabanı
+kurulu değilse .env içinde DATABASE_URL satırını yorum yapın ve backend'i
+yeniden başlatın. Demo açılınca kalıcı kayıt kapalı olsa da ses/metin denenebilir.
+
+1. Chrome'da localhost için mikrofon izni verin.
+2. Giriş mikrofonunu seçin. İzin sonrasında listeyi yenileyerek cihaz adlarını görün.
+3. Önce otomatik metin kapalıyken 10 saniye ses kaydedin. Konuşurken seviye
+  göstergesi hareket etmeli. Durdurup oynatıcıdaki düğmeyle dinleyin.
+4. Seviye hiç hareket etmiyorsa Windows Ayarlar > Sistem > Ses > Giriş
+  bölümünde aynı mikrofonu test edin; fiziksel sessiz düğmesini kontrol edin.
+5. Sonra otomatik metin kutusunu işaretleyip yeni kayıt açın. Tanıma
+  başlamasını bekleyin. Hata olursa ekrandaki kodu not edin.
+
+Seviye göstergesi sesin hoparlöre verilmesi değildir. Geri beslemeyi önlemek
+için canlı mikrofon sesi hoparlöre bağlanmaz. Gösterge 250 ms'de bir örneklenir
+ve kayıt sonunda Web Audio kaynağı kapatılır. Sessizlik uyarısı yaklaşık
+bir eşiktir; sesin anlaşılabilirliğini kanıtlamaz.
+
+Eski tarayıcılarda tanıma verilen ses izini desteklemeyip varsayılan mikrofonu
+kullanabilir; Chrome varsayılan mikrofonunu da doğru seçin. `network` hatası
+tarayıcının tanıma hizmetine bağlanamadığını belirtir; PostgreSQL ile ilgili değildir.
+
+Resmi yardım:
+- https://support.google.com/chrome/answer/2693767
+- https://support.microsoft.com/en-us/windows/hardware/drivers/how-to-set-up-and-test-microphones-in-windows
+- https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition/start

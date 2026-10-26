@@ -56,6 +56,8 @@ beforeEach(async () => {
   delete (window as any).webkitSpeechRecognition;
   speechStartThrows = false;
   globalThis.fetch = originalFetch;
+  delete (window as any).AudioContext;
+  delete (navigator.mediaDevices as any).enumerateDevices;
   request = async () => makeStream();
   root = createRoot(container);
 });
@@ -145,8 +147,10 @@ class FakeSpeech implements SpeechEngine {
   onend: SpeechEngine['onend'] = null;
   aborted = false;
   started = false;
+  onstart: SpeechEngine['onstart'] = null;
+  inputTrack?: MediaStreamTrack;
   constructor() { speech = this; }
-  start() { if (speechStartThrows) throw new Error('unavailable'); this.started = true; }
+  start(track?: MediaStreamTrack) { if (speechStartThrows) throw new Error('unavailable'); this.inputTrack = track; this.started = true; this.onstart?.(); }
   abort() { this.aborted = true; }
   result(...segments: [string, boolean][]) {
     const results = segments.map(([text, final]) => Object.assign([{ transcript: text }], { isFinal: final }));
@@ -178,6 +182,7 @@ test('speech is opt-in even when browser supports it', async () => {
 test('Turkish live results replace interim words, freeze on stop, allow text clearing', async () => {
   supportSpeech(); await mount(); await enableTranscript(); await click('Kaydı başlat');
   assert.equal(speech.lang, 'tr-TR');
+  assert.equal(speech.inputTrack, streams[0].track);
   assert.equal(speech.continuous, true);
   assert.equal(editor().readOnly, true);
   await act(async () => { speech.result(['Merhaba', true], ['ben', false]); });
@@ -200,7 +205,7 @@ test('speech network error preserves draft and keeps recording audio', async () 
   assert.equal(editor().value, 'Bir proje');
   assert.equal(current.state, 'recording');
   assert.equal(streams[0].track.readyState, 'live');
-  assert.ok(container.textContent?.includes('bağlantısı kesildi'));
+  assert.ok(container.textContent?.includes('Tanıma hatası: network'));
   await click('Kaydı durdur');
   assert.ok(container.querySelector('audio'));
 });
@@ -224,6 +229,8 @@ test('speech start failure or early end does not stop audio', async () => {
   await click('Kaydı durdur');
   speechStartThrows = false;
   globalThis.fetch = originalFetch;
+  delete (window as any).AudioContext;
+  delete (navigator.mediaDevices as any).enumerateDevices;
   await click('Yeniden kaydet');
   await act(async () => { speech.onend?.(); });
   assert.equal(current.state, 'recording');
@@ -298,4 +305,44 @@ test('saved answers load no audio until explicit click and reuse downloaded blob
   assert.ok(container.querySelector('audio')?.src.startsWith('blob:qa-'));
   await click('Sesi indir');
   assert.equal(calls, 1);
+});
+
+test('microphone selector passes chosen device to getUserMedia', async () => {
+  (navigator.mediaDevices as any).enumerateDevices = async () => [{ kind: 'audioinput', deviceId: 'usb-mic', label: 'USB mikrofon' }];
+  await mount(); await click('Mikrofon listesini yenile');
+  const select = container.querySelector('select')!;
+  await act(async () => { select.value = 'usb-mic'; select.dispatchEvent(new dom.window.Event('change', { bubbles: true })); });
+  await click('Kaydı başlat');
+  assert.deepEqual((constraints as any).audio.deviceId, { exact: 'usb-mic' });
+  await click('Kaydı durdur');
+});
+function mockMeter(value: number) {
+  let closed = false;
+  (window as any).AudioContext = class {
+    state = 'running';
+    createMediaStreamSource() { return { connect() {}, disconnect() {} }; }
+    createAnalyser() { return { fftSize: 256, getByteTimeDomainData(data: Uint8Array) { data.fill(value); }, disconnect() {} }; }
+    async resume() {}
+    async close() { closed = true; }
+  };
+  return () => closed;
+}
+test('silent microphone is flagged and analysis context is closed', async () => {
+  const closed = mockMeter(128);
+  await mount(); await click('Kaydı başlat');
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 300)); });
+  assert.equal(container.querySelector('meter')!.value, 0);
+  await click('Kaydı durdur');
+  assert.ok(container.textContent?.includes('mikrofon girişinde ses algılanmadı'));
+  assert.equal(closed(), true);
+  assert.ok(container.querySelector('audio'));
+});
+test('detected input signal moves the meter and avoids silence warning', async () => {
+  const closed = mockMeter(145);
+  await mount(); await click('Kaydı başlat');
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 300)); });
+  assert.ok(container.querySelector('meter')!.value > 0);
+  await click('Kaydı durdur');
+  assert.ok(!container.textContent?.includes('mikrofon girişinde ses algılanmadı'));
+  assert.equal(closed(), true);
 });

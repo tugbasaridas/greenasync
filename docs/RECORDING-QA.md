@@ -73,3 +73,16 @@ hizmetinin trafiği ve işlemi ayrıca değerlendirilmelidir.
 Dosya boyutu ve kapsayıcı başlığı sunucuda kontrol edilir. Gerçek medya
 içeriği/kanal türü ve süre henüz decode edilerek doğrulanmaz; süre alanı
 istemci bildirimidir. Bu sürüm internete açık üretim kullanımı için hazır değildir.
+
+## Sessiz kayıt tanısı
+
+- Önce otomatik metin kapalıyken test edin; sonra açıkken karşılaştırın.
+- Seçilen mikrofon adının ve seviye göstergesinin görünmesini kontrol edin.
+- Farklı giriş cihazları arasında seçim yapıp yeniden kaydedin.
+- 10 saniye sessiz kaldığınızda düşük seviye uyarısı görülebilir.
+- Ses girişi var ama oynatım sessizse indirilen dosyayı ayrı oynatıcıda açın.
+- Çıkış/hoparlör sesini de kontrol edin; canlı mikrofon izleme yapılmaz.
+- Otomatik metin kutusu seçilmemişse açık bir kapalı uyarısı görünmeli.
+- Hata varsa tanıma kodu ve Chrome sürümünü not edin.
+- Otomatik testler sahte giriş verileriyle cihaz seçimini, sessizliği ve
+  kayıt sonrası analiz kaynağının kapatılmasını sınar; fiziksel mikrofonu sınamaz.
