@@ -20,13 +20,13 @@ export default function App() {
     } finally { setLoading(false); }
   }
   return <main>
-    <header><a className="brand" href="/">GreenAsync<span>●</span></a><span className="badge">Geliştirme sürümü · 0.2</span></header>
+    <header><a className="brand" href="/">GreenAsync<span>●</span></a><span className="badge">Geliştirme sürümü · 0.3</span></header>
     <section className="hero">
       <p className="eyebrow">DAHA YEŞİL İŞE ALIM</p>
       <h1>Yanıta odaklan.<br /><span>Veri yükünü azalt.</span></h1>
       <p className="intro">Ses ve metin tabanlı ön mülakat. Adayın yanıtı metin olarak incelenir; ses, ihtiyaç olduğunda açılır.</p>
       <button onClick={loadDemo} disabled={loading || activeQuestion !== null}>{loading ? 'Bağlanılıyor…' : questions.length ? 'Soruları yenile' : 'Demo mülakatını aç'} <span aria-hidden="true">↗</span></button>
-      <p className="note">Ses kaydı denemesi hazır. Kayıtlar yalnızca bu sekmede tutulur; sayfa yenilenirse silinir. Henüz başvuru gönderilmez.</p>
+      <p className="note">Ses ve metin taslağı bu sekmede tutulur; sayfa yenilenirse silinir. Henüz başvuru gönderilmez.</p>
     </section>
     <section className="cards" aria-label="Planlanan mülakat akışı">
       <article><span className="number">01</span><h2>Aday yanıtlar</h2><p>Kamera yerine mikrofon. Yanıtın sesi ve adayın kontrol ettiği metni birlikte kaydedilir.</p></article>
@@ -37,7 +37,7 @@ export default function App() {
       <div className="section-title"><h2 id="demo-title">Demo mülakatı</h2><span>Örnek pozisyon · Yazılım geliştirici</span></div>
       <p role="status">{status || 'Soruları görmek ve API bağlantısını denemek için yukarıdaki düğmeye basın.'}</p>
       {questions.length > 0 && <>
-        <p className="local-notice">Bu bir kayıt denemesidir. Ses sunucuya gönderilmez. Otomatik metin ve başvuru gönderimi henüz eklenmedi.</p>
+        <p className="local-notice">Bu bir kayıt denemesidir. Ses ve metin uygulamanın sunucusuna gönderilmez. Otomatik metni seçerseniz tarayıcının tanıma hizmeti sesi harici bir serviste işleyebilir. Başvuru gönderimi henüz eklenmedi.</p>
         <ol className="question-list">{questions.map(q => <li key={q.id}>
           <h3>{q.text}</h3><small>Yanıt süresi: en fazla {q.maxSeconds} saniye</small>
           <AudioAnswer questionId={q.id} maxSeconds={q.maxSeconds} locked={activeQuestion !== null && activeQuestion !== q.id} onBusyChange={busy => setActiveQuestion(current => busy ? q.id : current === q.id ? null : current)} />

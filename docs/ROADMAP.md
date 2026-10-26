@@ -4,7 +4,7 @@
 - [x] API sağlık kontrolü ve üç örnek soru
 - [x] Responsive ana sayfa ve API bağlantısı
 - [x] Mikrofonla kayıt, süre sınırı, önizleme ve mikrofonu kapatma
-- [ ] Türkçe konuşmayı metne dönüştürme, destek kontrolü ve elle düzeltme
+- [x] Türkçe konuşmayı metne dönüştürme, destek kontrolü ve elle düzeltme
 - [ ] PostgreSQL modelleri ve migration; gerçek veritabanı bağlantısı
 - [ ] Kalıcı dosya alanı ve ses/metin gönderimi
 - [ ] İK girişi ve aday bağlantıları için erişim kontrolü

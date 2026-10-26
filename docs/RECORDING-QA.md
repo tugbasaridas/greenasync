@@ -33,3 +33,27 @@ Bu testler gerçek ses üretmez; codec ve mikrofon kalitesini doğrulamaz.
 
 Tarayıcı zamanlayıcıları arka planda gecikebilir; süre sınırı gerçek zamanlı
 bir garanti değildir. Sunucu eklenince süre ve boyut ayrıca doğrulanmalıdır.
+
+## Otomatik metin kontrolleri
+
+Otomatik testler Türkçe tanıma ayarı, güncellenen ara sonuçların tekrar
+etmeden birleştirilmesi, izin/network hatalarında sesin devamı, prefiksli
+API desteği, tanıma iptali ve metin taslağının korunmasını da kapsar.
+Gerçek konuşma tanıma hizmetine bağlanılmaz.
+
+Gerçek tarayıcıda:
+
+- Otomatik metin varsayılan kapalı olmalı; bilgi metni görülebilmeli.
+- Destek varsa seçip Türkçe konuşun; canlı taslak görünmeli.
+- Durdurunca tanıma da sonlanmalı ve metin düzenlenebilir olmalı.
+- Metne ekleme/silme yapın; ses dosyası değişmemeli.
+- Sesi silin: metin korunmalı. Metni temizleyin: ses korunmalı.
+- Yeniden kayıt başarıyla başlarsa önceki metin sıfırlanmalı.
+- Tanıma desteği olmayan tarayıcıda elle metin girişi çalışmalı.
+- Tanıma hizmeti kesilirse ses durmamalı; eksik metin elle tamamlanabilmeli.
+- Sekme kapanınca hem ses kaydı hem tanımanın mikrofon erişimi sonlanmalı.
+
+Bu sürüm son tanıma sonucunu beklemek yerine kaydı durdurunca tanımayı
+iptal eder; son kelimeler eksik kalabilir. Metin adayın kontrol edeceği taslaktır.
+Ses ve metin uygulamanın backend'ine yüklenmez. Harici tarayıcı tanıma
+hizmetinin trafiği ve işlemi ayrıca değerlendirilmelidir.

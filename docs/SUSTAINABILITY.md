@@ -16,7 +16,10 @@ ek kütüphaneler eklenmez. TypeScript JavaScript olarak derlenir.
 - Video izni istenmeden ses kaydı; 32 kbps ve mono hedeflenir.
 - Kayıt durunca mikrofon izleri kapatılır; zamanlayıcılar temizlenir.
 - Silme ve yeniden kayıtta geçersiz Blob adresleri serbest bırakılır.
-- Ses kayıtları bu sürümde sunucuya gönderilmez.
+- Ses ve metin taslakları uygulamanın backend'ine gönderilmez.
+- Otomatik metin isteğe bağlıdır; harici tanıma servisi kullanabilir.
+- Tanıma hizmeti hata verir veya biterse sürekli yeniden başlatılmaz.
+- Kayıt durduğunda konuşma tanıma da iptal edilir. Oluşan taslak korunur.
 
 ## Geliştirme hedefleri
 

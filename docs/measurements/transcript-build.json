@@ -1,0 +1,16 @@
+{
+  "version": "0.3.0",
+  "scope": "Frontend production assets only; no energy, external speech service or CO2 measurement",
+  "files": [
+    {
+      "file": "index-Dtfc0lXO.css",
+      "bytes": 5199,
+      "gzip_bytes": 1707
+    },
+    {
+      "file": "index-NEe92UgF.js",
+      "bytes": 237485,
+      "gzip_bytes": 74257
+    }
+  ]
+}
