@@ -1,3 +1,4 @@
 faster-whisper==1.2.1
-av==15.1.0
+av==15.1.0; python_version < "3.14"
+av==16.1.0; python_version >= "3.14"
 huggingface-hub>=0.21,<1.0

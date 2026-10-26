@@ -20,7 +20,7 @@ Dönüştürme süresi kayıt uzunluğuna ve işlemciye bağlıdır; anlık sonu
 
 - Node.js 22.12 veya üstü ve npm
 - Git
-- Yerel model kurulumu için Python 3.11/3.12 önerilir (64 bit; 3.10–3.13 desteklenir)
+- Yerel model kurulumu için Python 3.10–3.14 (64 bit)
 - İlk Python/model indirmesi için internet
 
 **Ayrı PostgreSQL sunucusu veya pgAdmin zorunlu değil.** DATABASE_URL yoksa

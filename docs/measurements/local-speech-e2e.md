@@ -21,3 +21,11 @@ Bu, genel doğruluk veya enerji benchmark'ı değildir.
 Özel adların yazımında hata görüldü. Adayın düzeltme alanı korunur.
 Ses tanımanın enerji/CPU maliyeti ve gerçek aday konuşmasındaki doğruluk
 bu kontrolle ölçülmüş sayılmaz. Örnek ses repo içine eklenmedi.
+
+## Python 3.14 uyumluluk kontrolü
+
+Aynı uçtan uca akış CPython 3.14.8 / Linux x86-64, PyAV 16.1.0 ile
+çalıştırıldı: HTTP 201, aynı Türkçe metin, İK metin detayı ve not kaydı başarılı.
+Windows x86-64 / CPython 3.14 için tüm bağımlılıklar yalnızca hazır binary
+paketler kullanılarak çözümlendi. Windows üzerinde gerçek çalıştırma bu
+ortamda yapılmadı. Python 3.10–3.13 için önceden sınanan PyAV 15.1.0 korunur.

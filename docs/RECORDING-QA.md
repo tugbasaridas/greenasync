@@ -3,7 +3,7 @@
 ## Kurulum
 
 - Node/npm kurulumu ve npm ci tamamlanmış olmalı.
-- Python 3.11/3.12 ile npm run setup:speech başarıyla bitmeli.
+- Python 3.10–3.14 ile npm run setup:speech başarıyla bitmeli.
 - DATABASE_URL verilmezse backend embedded modda ve disk tabanlı açılmalı.
 - Backend başlatılınca İK şifre dosyasının yolu belirtilmeli.
 - Kullanıcı verileri, sesler ve model dosyaları GitHub'da olmamalı.
