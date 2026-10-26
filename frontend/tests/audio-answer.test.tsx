@@ -4,6 +4,8 @@ import { JSDOM } from 'jsdom';
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import AudioAnswer from '../src/components/AudioAnswer';
+import SavedAnswers from '../src/components/SavedAnswers';
+import type { SavedAnswer } from '../src/api';
 import type { SpeechEngine, SpeechResultEvent } from '../src/hooks/useTranscript';
 
 const dom = new JSDOM('<!doctype html><div id="root"></div>', { url: 'http://localhost' });
@@ -17,6 +19,7 @@ let constraints: unknown;
 let current: FakeRecorder;
 let revoked: string[] = [];
 let sequence = 0;
+const originalFetch = globalThis.fetch;
 let root: Root;
 const container = document.getElementById('root')!;
 Object.assign(URL, { createObjectURL: () => `blob:qa-${++sequence}`, revokeObjectURL: (url: string) => revoked.push(url) });
@@ -45,13 +48,14 @@ Object.assign(globalThis, { MediaRecorder: FakeRecorder });
 Object.defineProperty(navigator, 'mediaDevices', { value: { getUserMedia: (options: unknown) => { constraints = options; return request(); } } });
 const button = (text: string) => [...container.querySelectorAll('button')].find(b => b.textContent === text)!;
 async function click(text: string) { await act(async () => { button(text).click(); }); }
-async function mount(seconds = 60) { await act(async () => { root.render(<AudioAnswer questionId={1} maxSeconds={seconds} locked={false} onBusyChange={() => {}} />); }); }
+async function mount(seconds = 60, extra: Partial<React.ComponentProps<typeof AudioAnswer>> = {}) { await act(async () => { root.render(<AudioAnswer questionId={1} maxSeconds={seconds} locked={false} onBusyChange={() => {}} {...extra} />); }); }
 beforeEach(async () => {
   if (root) await act(async () => root.unmount());
   streams.length = 0; revoked = []; constraints = null;
   delete (window as any).SpeechRecognition;
   delete (window as any).webkitSpeechRecognition;
   speechStartThrows = false;
+  globalThis.fetch = originalFetch;
   request = async () => makeStream();
   root = createRoot(container);
 });
@@ -219,6 +223,7 @@ test('speech start failure or early end does not stop audio', async () => {
   assert.ok(container.textContent?.includes('Otomatik metin başlatılamadı'));
   await click('Kaydı durdur');
   speechStartThrows = false;
+  globalThis.fetch = originalFetch;
   await click('Yeniden kaydet');
   await act(async () => { speech.onend?.(); });
   assert.equal(current.state, 'recording');
@@ -244,4 +249,53 @@ test('time limit also releases speech recognition', async () => {
   assert.equal(streams[0].track.readyState, 'ended');
   assert.equal(editor().readOnly, false);
   assert.equal(editor().value, 'Kısa yanıt');
+});
+
+const savedFixture: SavedAnswer = { questionId: 1, transcript: 'Kaydedilmiş yanıt', audioMime: 'audio/webm', audioBytes: 50, duration: 2, updatedAt: '2026-10-26T12:00:00Z' };
+test('saving sends actual audio plus text; failed save preserves draft for retry', async () => {
+  let form: FormData;
+  let authorization: string | undefined;
+  let failed = true;
+  let result: SavedAnswer | undefined;
+  globalThis.fetch = (async (_url: unknown, options: RequestInit) => {
+    form = options.body as FormData;
+    authorization = (options.headers as Record<string, string>).Authorization;
+    return failed ? Response.json({ message: 'Bağlantı sorunu' }, { status: 503 }) : Response.json(savedFixture);
+  }) as typeof fetch;
+  supportSpeech(); await mount(60, { sessionToken: 'test-token', onSaved: answer => { result = answer; } });
+  await enableTranscript(); await click('Kaydı başlat');
+  await act(async () => { speech.result(['Gönderilecek metin', true]); });
+  await click('Kaydı durdur'); await click('Yanıtı kaydet');
+  assert.equal(authorization, 'Bearer test-token');
+  assert.equal(form!.get('transcript'), 'Gönderilecek metin');
+  assert.ok(form!.get('audio') instanceof Blob);
+  assert.ok(container.querySelector('audio'));
+  assert.equal(editor().value, 'Gönderilecek metin');
+  assert.ok(container.textContent?.includes('Bağlantı sorunu'));
+  failed = false; await click('Yanıtı kaydet');
+  assert.deepEqual(result, savedFixture);
+  assert.equal(container.querySelector('audio'), null);
+});
+test('restored saved answer populates text; saving text does not upload audio again', async () => {
+  let form: FormData;
+  globalThis.fetch = (async (_url: unknown, options: RequestInit) => { form = options.body as FormData; return Response.json(savedFixture); }) as typeof fetch;
+  await mount(60, { sessionToken: 'test-token', savedAnswer: savedFixture });
+  assert.equal(editor().value, savedFixture.transcript);
+  await click('Yanıtı kaydet');
+  assert.equal(form!.get('audio'), null);
+  assert.equal(form!.get('transcript'), savedFixture.transcript);
+});
+test('saved answers load no audio until explicit click and reuse downloaded blob', async () => {
+  let calls = 0;
+  globalThis.fetch = (async () => { calls++; return new Response(new Blob(['audio']), { headers: { 'Content-Type': 'audio/webm' } }); }) as typeof fetch;
+  dom.window.HTMLAnchorElement.prototype.click = function () {};
+  await act(async () => { root.render(<SavedAnswers answers={[savedFixture]} token="secret" />); });
+  assert.equal(calls, 0);
+  assert.equal(container.querySelector('audio'), null);
+  assert.ok(container.textContent?.includes(savedFixture.transcript));
+  await click('Sesi dinle');
+  assert.equal(calls, 1);
+  assert.ok(container.querySelector('audio')?.src.startsWith('blob:qa-'));
+  await click('Sesi indir');
+  assert.equal(calls, 1);
 });

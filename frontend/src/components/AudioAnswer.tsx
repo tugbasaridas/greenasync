@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import useTranscript from '../hooks/useTranscript';
+import { api, type SavedAnswer } from '../api';
 
-type Props = { questionId: number; maxSeconds: number; locked: boolean; onBusyChange: (busy: boolean) => void };
+type Props = { questionId: number; maxSeconds: number; locked: boolean; onBusyChange: (busy: boolean) => void; sessionToken?: string; savedAnswer?: SavedAnswer; onSaved?: (answer: SavedAnswer) => void };
 type Phase = 'idle' | 'requesting' | 'recording' | 'stopping' | 'ready';
-type Recording = { url: string; bytes: number; mime: string; duration: number };
+type Recording = { url: string; bytes: number; mime: string; duration: number; blob: Blob };
 const clock = (seconds: number) => `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${Math.floor(seconds % 60).toString().padStart(2, '0')}`;
 function permissionMessage(error: unknown) {
   const name = error instanceof DOMException ? error.name : '';
@@ -12,12 +13,14 @@ function permissionMessage(error: unknown) {
   if (name === 'NotReadableError') return 'Mikrofona erişilemiyor. Başka bir uygulamanın kullanıp kullanmadığını kontrol edin.';
   return 'Ses kaydı başlatılamadı. Mikrofonu ve tarayıcı desteğini kontrol edip tekrar deneyin.';
 }
-export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChange }: Props) {
+export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChange, sessionToken, savedAnswer, onSaved }: Props) {
   const transcript = useTranscript();
   const [phase, setPhase] = useState<Phase>('idle');
   const [elapsed, setElapsed] = useState(0);
   const [recording, setRecording] = useState<Recording | null>(null);
   const [message, setMessage] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveNotice, setSaveNotice] = useState('');
   const alive = useRef(true);
   const generation = useRef(0);
   const busy = useRef(false);
@@ -81,7 +84,7 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
   useEffect(() => { if (locked) audio.current?.pause(); }, [locked]);
 
   async function start() {
-    if (locked || busy.current) return;
+    if (locked || busy.current || saving) return;
     if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
       setMessage('Bu tarayıcıda kayıt kullanılamıyor. Güncel bir tarayıcıda localhost veya HTTPS üzerinden açın.');
       return;
@@ -133,7 +136,7 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
             clearPreview();
             const objectUrl = URL.createObjectURL(blob);
             url.current = objectUrl;
-            setRecording({ url: objectUrl, bytes: blob.size, mime: blob.type, duration: elapsedRef.current });
+            setRecording({ url: objectUrl, bytes: blob.size, mime: blob.type, duration: elapsedRef.current, blob });
             setPhase('ready');
           } else {
             setMessage('Ses verisi oluşmadı. Birkaç saniye konuşup tekrar deneyin.');
@@ -147,6 +150,7 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
       });
       current.start(1000);
       clearPreview();
+      setSaveNotice('');
       transcript.start();
       started.current = performance.now();
       elapsedRef.current = 0;
@@ -173,7 +177,34 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
     setMessage('Kayıt isteği iptal edildi. Tarayıcının açık izin penceresini kapatabilirsiniz.');
     finishBusy();
   }
-  const isBusy = phase === 'requesting' || phase === 'recording' || phase === 'stopping';
+  useEffect(() => {
+    if (savedAnswer) transcript.setText(savedAnswer.transcript);
+  }, [savedAnswer?.updatedAt]);
+  async function save() {
+    if (!sessionToken || busy.current || saving || locked) return;
+    busy.current = true;
+    busyCallback.current(true);
+    setSaving(true); setSaveNotice('Kaydediliyor…');
+    const form = new FormData();
+    form.set('transcript', transcript.text);
+    if (recording) {
+      form.set('audio', recording.blob, 'answer.audio');
+      form.set('duration', String(recording.duration));
+    }
+    try {
+      const answer = await api<SavedAnswer>(`/answers/${questionId}`, { method: 'PUT', body: form }, sessionToken);
+      if (!alive.current) return;
+      clearPreview();
+      setPhase('ready');
+      onSaved?.(answer);
+      setSaveNotice('Yanıt kalıcı olarak kaydedildi. Sunucudaki ses için aşağıdaki Kaydedilmiş yanıtlarım bölümünü kullanabilirsiniz.');
+    } catch (error) {
+      if (alive.current) setSaveNotice(error instanceof Error ? error.message : 'Kaydedilemedi. Taslağınız bu sekmede korundu.');
+    } finally {
+      if (alive.current) { setSaving(false); finishBusy(); }
+    }
+  }
+  const isBusy = saving || phase === 'requesting' || phase === 'recording' || phase === 'stopping';
   const extension = recording?.mime.includes('mp4') ? 'm4a' : recording?.mime.includes('ogg') ? 'ogg' : 'webm';
   return <div className="answer-recorder">
     <div className="transcript-option">
@@ -183,7 +214,7 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
     <div className="recording-top"><span className={phase === 'recording' ? 'record-state active' : 'record-state'}>{phase === 'recording' ? '● Kayıtta' : 'Sesli yanıt'}</span><span className="timer" aria-label="Kayıt süresi">{clock(elapsed)} / {clock(maxSeconds)}</span></div>
     <progress value={elapsed} max={maxSeconds} aria-label="Yanıt süresi" />
     <div className="record-actions">
-      {!isBusy && <button type="button" disabled={locked} onClick={start}>{recording ? 'Yeniden kaydet' : 'Kaydı başlat'}</button>}
+      {!isBusy && <button type="button" disabled={locked} onClick={start}>{recording || savedAnswer ? 'Yeniden kaydet' : 'Kaydı başlat'}</button>}
       {phase === 'requesting' && <button type="button" className="secondary" onClick={cancelPermission}>İzin isteğini iptal et</button>}
       {(phase === 'recording' || phase === 'stopping') && <button type="button" className="stop-button" disabled={phase === 'stopping'} onClick={() => stop()}>{phase === 'stopping' ? 'Kayıt hazırlanıyor…' : 'Kaydı durdur'}</button>}
       {recording && !isBusy && <button type="button" className="secondary" disabled={locked} onClick={() => { clearPreview(); setPhase('idle'); setElapsed(0); setMessage('Ses kaydı silindi. Yanıt metni korundu.'); }}>Kaydı sil</button>}
@@ -198,7 +229,11 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
       <textarea id={`transcript-${questionId}`} value={transcript.text} readOnly={isBusy || locked} maxLength={12000} rows={5} placeholder="Otomatik metin burada görünür. Yanıtınızı elle de yazabilirsiniz." aria-describedby={`transcript-help-${questionId}`} onChange={event => transcript.setText(event.target.value)} />
       <p id={`transcript-help-${questionId}`}>Kayıt sırasında metin düzenlenmez. Kaydı durdurduktan sonra sesinizi dinleyip hataları düzeltin. Yeniden kayıt başlarsa mevcut metin sıfırlanır.</p>
       {transcript.notice && <p className="transcript-notice" role="status">{transcript.notice}</p>}
-      <div className="text-actions"><small>{transcript.text.length.toLocaleString('tr-TR')} karakter · Bu sekmede geçici taslak</small><button type="button" className="secondary" disabled={isBusy || locked || !transcript.text} onClick={() => transcript.reset()}>Metni temizle</button></div>
+      <div className="text-actions"><small>{transcript.text.length.toLocaleString('tr-TR')} karakter · Kaydetmeden önce geçici taslak</small><button type="button" className="secondary" disabled={isBusy || locked || !transcript.text} onClick={() => transcript.reset()}>Metni temizle</button></div>
+    </div>
+    <div className="save-answer"><button type="button" disabled={isBusy || locked || !sessionToken || !transcript.text.trim() || (!recording && !savedAnswer)} onClick={save}>{saving ? 'Kaydediliyor…' : 'Yanıtı kaydet'}</button><p>Ses ve kontrol ettiğiniz metin birlikte kaydedilir. Kayıtlı yanıtın yalnızca metnini de güncelleyebilirsiniz.</p>
+      {!sessionToken && <p>Kalıcı kayıt için veritabanı bağlantısını kurup demo mülakatını yeniden açın.</p>}
+      {saveNotice && <p role="status">{saveNotice}</p>}
     </div>
   </div>;
 }

@@ -55,5 +55,21 @@ Gerçek tarayıcıda:
 
 Bu sürüm son tanıma sonucunu beklemek yerine kaydı durdurunca tanımayı
 iptal eder; son kelimeler eksik kalabilir. Metin adayın kontrol edeceği taslaktır.
-Ses ve metin uygulamanın backend'ine yüklenmez. Harici tarayıcı tanıma
+Kaydet seçilmeden ses ve metin uygulamanın backend'ine yüklenmez. Harici tarayıcı tanıma
 hizmetinin trafiği ve işlemi ayrıca değerlendirilmelidir.
+
+## Kalıcı kayıt
+
+- Ayrı bir greenasync PostgreSQL veritabanı ve .env/DATABASE_URL ayarlayın.
+- Ses kaydedin, metni kontrol edin, Yanıtı kaydet düğmesine basın.
+- Sayfayı yenileyip mülakatı açın: metinler geri gelmeli.
+- Network panelinde Dinle/İndir öncesi audio isteği olmamalı.
+- Yalnızca metni güncellerken multipart istekte audio alanı olmamalı.
+- Yeni ses kaydedilince uploads/audio içindeki eski dosya silinmeli.
+- Backend ve PostgreSQL yeniden başlatılınca kayıtlar korunmalı.
+- Gizli sekmede yeni başvuru açınca önceki başvurunun metinleri görülmemeli.
+- DB yoksa açıklayıcı hata görünmeli; geçici ses/metin korunmalı.
+
+Dosya boyutu ve kapsayıcı başlığı sunucuda kontrol edilir. Gerçek medya
+içeriği/kanal türü ve süre henüz decode edilerek doğrulanmaz; süre alanı
+istemci bildirimidir. Bu sürüm internete açık üretim kullanımı için hazır değildir.

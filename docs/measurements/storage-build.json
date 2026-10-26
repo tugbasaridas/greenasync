@@ -1,0 +1,16 @@
+{
+  "version": "0.4.0",
+  "scope": "Frontend production assets only; excludes uploaded audio and external recognition services; not energy/CO2 measurement",
+  "files": [
+    {
+      "file": "index-CK2VT_xi.css",
+      "bytes": 5695,
+      "gzip_bytes": 1819
+    },
+    {
+      "file": "index-KZ3-EIin.js",
+      "bytes": 242240,
+      "gzip_bytes": 75625
+    }
+  ]
+}
