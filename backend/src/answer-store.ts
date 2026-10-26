@@ -14,9 +14,10 @@ const hash = (token: string) => createHash('sha256').update(token).digest('hex')
 export class AnswerStore {
   readonly directory = resolve(process.env.UPLOAD_DIR || join(__dirname, '../../uploads/audio'));
   constructor(@Inject(Database) private readonly db: Database) {}
-  async createSession() {
+  async createSession(displayName = 'Demo aday') {
+    if (typeof displayName !== 'string' || !displayName.trim() || displayName.trim().length > 80) throw new BadRequestException('Aday adı 1–80 karakter olmalı.');
     const token = randomBytes(32).toString('base64url');
-    await this.db.requirePool().query('INSERT INTO applications(id, token_hash) VALUES ($1,$2)', [randomUUID(), hash(token)]);
+    await this.db.requirePool().query('INSERT INTO applications(id, token_hash, display_name) VALUES ($1,$2,$3)', [randomUUID(), hash(token), displayName.trim()]);
     return { token };
   }
   async authenticate(authorization?: string) {

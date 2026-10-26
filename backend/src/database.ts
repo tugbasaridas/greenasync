@@ -1,5 +1,8 @@
 import { Injectable, OnModuleDestroy, OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
 import { Pool } from 'pg';
+import { mkdirSync } from 'node:fs';
+import { resolve, join } from 'node:path';
+import { EmbeddedPool, type DbPool } from './embedded-pool';
 
 export const schema = `
 CREATE TABLE IF NOT EXISTS schema_migrations (version integer PRIMARY KEY);
@@ -19,25 +22,40 @@ CREATE TABLE IF NOT EXISTS answers (
   updated_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (application_id, question_id)
 );
-INSERT INTO schema_migrations(version) VALUES (1) ON CONFLICT DO NOTHING;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS display_name varchar(80) NOT NULL DEFAULT 'Demo aday';
+CREATE TABLE IF NOT EXISTS reviews (
+  application_id uuid PRIMARY KEY REFERENCES applications(id) ON DELETE CASCADE,
+  status varchar(20) NOT NULL DEFAULT 'new' CHECK (status IN ('new','reviewing','shortlisted','rejected')),
+  note text NOT NULL DEFAULT '' CHECK (length(note) <= 4000),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+INSERT INTO schema_migrations(version) VALUES (1),(2) ON CONFLICT DO NOTHING;
 `;
 @Injectable()
 export class Database implements OnModuleInit, OnModuleDestroy {
-  readonly pool: Pool | null;
+  readonly pool: DbPool;
+  readonly mode: 'postgres' | 'embedded';
   constructor() {
-    this.pool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL, max: 5, connectionTimeoutMillis: 5000 }) : null;
-    this.pool?.on('error', () => console.error('PostgreSQL bağlantısında hata oluştu.'));
+    if (process.env.DATABASE_URL) {
+      const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5, connectionTimeoutMillis: 5000 });
+      pool.on('error', () => console.error('PostgreSQL bağlantısında hata oluştu.'));
+      this.pool = pool;
+      this.mode = 'postgres';
+    } else {
+      const directory = resolve(process.env.DATA_DIR || join(__dirname, '../../.data'));
+      mkdirSync(directory, { recursive: true });
+      this.pool = new EmbeddedPool(join(directory, 'postgres'));
+      this.mode = 'embedded';
+    }
   }
   requirePool() {
-    if (!this.pool) throw new ServiceUnavailableException('Kalıcı kayıt için .env dosyasında DATABASE_URL ayarlayın ve backend\'i yeniden başlatın.');
     return this.pool;
   }
   async onModuleInit() {
-    if (!this.pool) return;
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      await client.query('SELECT pg_advisory_xact_lock(741337)');
+      if (this.mode === 'postgres') await client.query('SELECT pg_advisory_xact_lock(741337)');
       await client.query(schema);
       await client.query('COMMIT');
     } catch (error) { await client.query('ROLLBACK'); throw error; }

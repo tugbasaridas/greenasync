@@ -16,7 +16,7 @@ ek kütüphaneler eklenmez. TypeScript JavaScript olarak derlenir.
 - Video izni istenmeden ses kaydı; 32 kbps ve mono hedeflenir.
 - Kayıt durunca mikrofon izleri kapatılır; zamanlayıcılar temizlenir.
 - Silme ve yeniden kayıtta geçersiz Blob adresleri serbest bırakılır.
-- Yanıtlar yalnızca kullanıcı Kaydet dediğinde aktarılır.
+- Ses, aday kaydı durdurunca otomatik aktarılır; metin düzeltmesi ayrı kaydedilir.
 - Metin listesi ses içermez; ses Dinle/İndir ile istenir.
 - Metin güncellemesi mevcut sesi tekrar göndermez.
 - Aynı sekmede indirilen ses Blob adresi yeniden kullanılır.
@@ -46,3 +46,15 @@ birbirinden ayrı ifade edilecek. Koyu/yeşil renk kullanmak tek başına tasarr
 kanıtı sayılmayacak.
 
 Rehber: https://www.w3.org/TR/web-sustainability-guidelines/
+
+## Yerel konuşma tanıma ve İK (0.5.0)
+
+Tarayıcı tanımasına alternatif yerel Whisper CPU/int8 motoru eklendi. Model
+kurulumda indirilir, runtime yalnızca yerel dosyaları açar. Aynı model
+istekler arasında yeniden kullanılır; iki dakika boşta kalınca süreç kapanır.
+Kuyruk sınırlıdır; birden çok ağır iş eşzamanlı çalıştırılmaz. Metin
+düzeltmesi yeniden çıkarım yapmaz. Bu politikanın enerji avantajı ölçülmedi.
+
+İK başvuru açınca sadece metin ve dosya bilgileri istenir; ses isteğe bağlıdır.
+Yerel demo için PGlite aynı PostgreSQL şemasını diskte tutar; ayrı sunucu
+kurulumu gerekmez. Bunun daha az enerji tükettiği varsayılmaz.

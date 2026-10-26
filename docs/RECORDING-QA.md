@@ -1,99 +1,42 @@
-# Ses kaydı doğrulaması
+# Sürüm 0.5.0 doğrulama listesi
 
-## Otomatik kontroller
+## Kurulum
 
-`npm test` ile jsdom ve taklit edilmiş MediaRecorder/getUserMedia üzerinden:
+- Node/npm kurulumu ve npm ci tamamlanmış olmalı.
+- Python 3.11/3.12 ile npm run setup:speech başarıyla bitmeli.
+- DATABASE_URL verilmezse backend embedded modda ve disk tabanlı açılmalı.
+- Backend başlatılınca İK şifre dosyasının yolu belirtilmeli.
+- Kullanıcı verileri, sesler ve model dosyaları GitHub'da olmamalı.
 
-1. Yalnızca ses isteme, durdurunca mikrofon izlerini kapatma ve önizleme.
-2. Kaydı silerken Blob adresini serbest bırakma.
-3. Mikrofon izni reddi ve tekrar deneme.
-4. Süre sınırında otomatik durma.
-5. İptal edilen izin daha sonra verilirse mikrofonu kapatma.
-6. İptal edilen eski isteğin hatasının yeni kaydı bozmaması.
-7. Bileşen kapanırken ve geciken izin yanıtında kaynakları temizleme.
-8. Yeniden kayıt için izin verilmezse önceki kaydı koruma.
+## Aday
 
-Bu testler gerçek ses üretmez; codec ve mikrofon kalitesini doğrulamaz.
+- Demo açılınca sorular ve başvuru erişim anahtarı hazırlanmalı.
+- Kaydı başlatınca kamera açılmadan mikrofon izni istenmeli.
+- Başka sorularda kayıt ve sekme değiştirme kilitlenmeli.
+- Konuşurken giriş seviyesi hareket etmeli; fiziksel cihazda ayrıca sınanmalı.
+- Durdurma veya süre sınırı mikrofonu ve analiz kaynağını kapatmalı.
+- Durdurunca /answers/:questionId/transcribe isteği otomatik gönderilmeli.
+- Dönüştürme sırasında ilerleme bilgisi görünmeli.
+- Model yoksa açıklayıcı kurulum hatası ve yeniden deneme olmalı; ses korunmalı.
+- Başarılı işlemden sonra metin ve kayıtlı yanıt görünmeli.
+- Yalnızca metni güncellerken ses tekrar yüklenmemeli.
+- Aynı tarayıcıda sayfa yenilenince kalıcı yanıtlar tekrar açılmalı.
 
-## Gerçek tarayıcıda elle kontrol
+## İK
 
-- Backend ve frontend açıkken localhost:5173 üzerinden demo mülakatını açın.
-- Mikrofonu reddedin: anlaşılır hata ve yeniden deneme görülmeli.
-- İzin verin: kamera açılmamalı; diğer soruların kayıt düğmeleri kilitlenmeli.
-- Konuşup durdurun: tarayıcı mikrofon kullanım göstergesi kapanmalı.
-- Kaydı dinleyin: anlaşılabilir ses; indirin ve dosyayı cihazda açın.
-- Yeni kayıtta eski önizleme kaldırılmalı; silince oynatıcı kaybolmalı.
-- İlk sorunun 60 saniyelik sınırında kayıt kendiliğinden durmalı.
-- İzin beklerken iptal edin, sonra izin verin: kayıt başlamamalı.
-- Kayıt sırasında sayfayı kapatın: mikrofon kullanımı sonlanmalı.
-- Sayfayı yenileyin: geçici kayıtların kaybolduğu doğrulanmalı.
-- Network panelinde kaydın yüklenmediğini doğrulayın.
-- Dar ekranda düğmeler, metin ve ses oynatıcı taşmamalı.
-- Kullanılan tarayıcı/OS, tarih ve bulguları not edin.
+- İK oturumu olmadan liste, detay, not ve ses uçları 401 vermeli.
+- İK parolasıyla giriş yapılmalı; başvuru erişim anahtarı bu yetkiyi vermemeli.
+- Aday seçilince metinler gelmeli; audio isteği yapılmamalı.
+- Dinle/İndir seçilince yalnızca ilgili kayıt istenmeli.
+- Aynı sekmede indirilen ses yeniden kullanılmalı.
+- Not ve durum kaydedilip yeniden açılınca korunmalı.
+- Çıkıştan sonra önceki oturum başvuruları okuyamamalı.
 
-Tarayıcı zamanlayıcıları arka planda gecikebilir; süre sınırı gerçek zamanlı
-bir garanti değildir. Sunucu eklenince süre ve boyut ayrıca doğrulanmalıdır.
+## Otomatik test sınırları
 
-## Otomatik metin kontrolleri
-
-Otomatik testler Türkçe tanıma ayarı, güncellenen ara sonuçların tekrar
-etmeden birleştirilmesi, izin/network hatalarında sesin devamı, prefiksli
-API desteği, tanıma iptali ve metin taslağının korunmasını da kapsar.
-Gerçek konuşma tanıma hizmetine bağlanılmaz.
-
-Gerçek tarayıcıda:
-
-- Otomatik metin varsayılan kapalı olmalı; bilgi metni görülebilmeli.
-- Destek varsa seçip Türkçe konuşun; canlı taslak görünmeli.
-- Durdurunca tanıma da sonlanmalı ve metin düzenlenebilir olmalı.
-- Metne ekleme/silme yapın; ses dosyası değişmemeli.
-- Sesi silin: metin korunmalı. Metni temizleyin: ses korunmalı.
-- Yeniden kayıt başarıyla başlarsa önceki metin sıfırlanmalı.
-- Tanıma desteği olmayan tarayıcıda elle metin girişi çalışmalı.
-- Tanıma hizmeti kesilirse ses durmamalı; eksik metin elle tamamlanabilmeli.
-- Sekme kapanınca hem ses kaydı hem tanımanın mikrofon erişimi sonlanmalı.
-
-Bu sürüm son tanıma sonucunu beklemek yerine kaydı durdurunca tanımayı
-iptal eder; son kelimeler eksik kalabilir. Metin adayın kontrol edeceği taslaktır.
-Kaydet seçilmeden ses ve metin uygulamanın backend'ine yüklenmez. Harici tarayıcı tanıma
-hizmetinin trafiği ve işlemi ayrıca değerlendirilmelidir.
-
-## Kalıcı kayıt
-
-- Ayrı bir greenasync PostgreSQL veritabanı ve .env/DATABASE_URL ayarlayın.
-- Ses kaydedin, metni kontrol edin, Yanıtı kaydet düğmesine basın.
-- Sayfayı yenileyip mülakatı açın: metinler geri gelmeli.
-- Network panelinde Dinle/İndir öncesi audio isteği olmamalı.
-- Yalnızca metni güncellerken multipart istekte audio alanı olmamalı.
-- Yeni ses kaydedilince uploads/audio içindeki eski dosya silinmeli.
-- Backend ve PostgreSQL yeniden başlatılınca kayıtlar korunmalı.
-- Gizli sekmede yeni başvuru açınca önceki başvurunun metinleri görülmemeli.
-- DB yoksa açıklayıcı hata görünmeli; geçici ses/metin korunmalı.
-
-Dosya boyutu ve kapsayıcı başlığı sunucuda kontrol edilir. Gerçek medya
-içeriği/kanal türü ve süre henüz decode edilerek doğrulanmaz; süre alanı
-istemci bildirimidir. Bu sürüm internete açık üretim kullanımı için hazır değildir.
-
-## Sessiz kayıt tanısı
-
-- Önce otomatik metin kapalıyken test edin; sonra açıkken karşılaştırın.
-- Seçilen mikrofon adının ve seviye göstergesinin görünmesini kontrol edin.
-- Farklı giriş cihazları arasında seçim yapıp yeniden kaydedin.
-- 10 saniye sessiz kaldığınızda düşük seviye uyarısı görülebilir.
-- Ses girişi var ama oynatım sessizse indirilen dosyayı ayrı oynatıcıda açın.
-- Çıkış/hoparlör sesini de kontrol edin; canlı mikrofon izleme yapılmaz.
-- Otomatik metin kutusu seçilmemişse açık bir kapalı uyarısı görünmeli.
-- Hata varsa tanıma kodu ve Chrome sürümünü not edin.
-- Otomatik testler sahte giriş verileriyle cihaz seçimini, sessizliği ve
-  kayıt sonrası analiz kaynağının kapatılmasını sınar; fiziksel mikrofonu sınamaz.
-
-## Görünür tanıma durumu (0.4.2)
-
-- Kayıt başlamadan Metne çevirme: Kapalı/Hazır durumu görünmeli.
-- Otomatik metin kutusunu seçince durum mesajı hemen değişmeli.
-- Kayıt sırasında tekrar başlat düğmesine basınca tanıma yeniden denenmeli.
-- Önceki metin korunmalı; yeni sonuçlar arkasına eklenmeli.
-- Hizmet start/result/error/end olayı göndermeden kalırsa 8 saniyede hata
-  görünmeli ve ses kaydı devam etmeli.
-- Bu adımlar taklit medya API'leriyle otomatik olarak sınanır; gerçek
-  Chrome tanıma hizmetine bağlantı başarısı kullanıcı cihazında sınanmalıdır.
+Medya yaşam döngüsü tarayıcı API taklitleriyle; kalıcı kayıt ve İK API'si
+PostgreSQL motoruyla sınanır. Gömülü motor ayrıca diskten tekrar açılır ve
+transaction sırasında diğer sorguların beklediği doğrulanır. Gerçek yerel
+model kontrolü docs/measurements/local-speech-e2e.md içinde belirtilir.
+Bu kontroller gerçek aday konuşmasındaki doğruluk veya enerji tasarrufu
+benchmark'ı değildir. Chrome'un isteğe bağlı canlı tanıması ayrı bir hizmettir.

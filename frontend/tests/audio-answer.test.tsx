@@ -5,6 +5,7 @@ import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import AudioAnswer from '../src/components/AudioAnswer';
 import SavedAnswers from '../src/components/SavedAnswers';
+import HrPanel from '../src/components/HrPanel';
 import type { SavedAnswer } from '../src/api';
 import type { SpeechEngine, SpeechResultEvent } from '../src/hooks/useTranscript';
 
@@ -381,4 +382,52 @@ test('a silent startup timeout produces an actionable message without stopping a
   assert.equal(current.state, 'recording');
   assert.equal(streams[0].track.readyState, 'live');
   await click('Kaydı durdur');
+});
+
+test('recording stop automatically transcribes and saves when local mode is enabled', async () => {
+  let called = '';
+  let form: FormData;
+  let result: SavedAnswer | undefined;
+  globalThis.fetch = (async (url: unknown, options: RequestInit) => { called = String(url); form = options.body as FormData; return Response.json({ ...savedFixture, transcript: 'Yerel model yanıtı' }); }) as typeof fetch;
+  await mount(60, { autoTranscribe: true, sessionToken: 'test-token', onSaved: answer => { result = answer; } });
+  await click('Kaydı başlat'); await click('Kaydı durdur');
+  assert.equal(called, '/api/answers/1/transcribe');
+  assert.ok(form!.get('audio') instanceof Blob);
+  assert.equal(form!.get('transcript'), null);
+  assert.equal(result?.transcript, 'Yerel model yanıtı');
+  assert.equal(editor().value, 'Yerel model yanıtı');
+  assert.ok(container.textContent?.includes('İK için kalıcı olarak kaydedildi'));
+});
+test('missing local model leaves the audio available for retry', async () => {
+  globalThis.fetch = (async () => Response.json({ message: 'Yerel konuşma modeli hazır değil. npm run setup:speech' }, { status: 503 })) as typeof fetch;
+  await mount(60, { autoTranscribe: true, sessionToken: 'test-token' });
+  await click('Kaydı başlat'); await click('Kaydı durdur');
+  assert.ok(container.querySelector('audio'));
+  assert.ok(container.textContent?.includes('npm run setup:speech'));
+  assert.ok(button('Yerel metne çevirmeyi tekrar dene'));
+});
+
+test('HR view requires login before fetching applicants', async () => {
+  const calls: string[] = [];
+  globalThis.fetch = (async (url: unknown) => { calls.push(String(url)); return Response.json({ message: 'İK girişi gerekli.' }, { status: 401 }); }) as typeof fetch;
+  await act(async () => { root.render(<HrPanel />); });
+  assert.deepEqual(calls, ['/api/hr/me']);
+  assert.ok(container.querySelector('input[type=password]'));
+  assert.ok(button('İK girişi'));
+});
+test('HR opens transcripts without fetching audio', async () => {
+  const id = '00000000-0000-0000-0000-000000000002';
+  const calls: string[] = [];
+  globalThis.fetch = (async (url: unknown) => {
+    const path = String(url);calls.push(path);
+    if(path.endsWith('/hr/me')) return Response.json({ username: 'ik' });
+    if(path.includes('/hr/applications?page=')) return Response.json({ items: [{ id, displayName: 'Test aday', answerCount: 1, status: 'new', createdAt: '2026-10-26T12:00:00Z' }], hasNext: false, page: 0 });
+    return Response.json({ application: { id, displayName: 'Test aday', status: 'new', note: '' }, answers: [savedFixture] });
+  }) as typeof fetch;
+  await act(async () => { root.render(<HrPanel />); });
+  await act(async () => { container.querySelector<HTMLButtonElement>('.application-item')!.click(); });
+  assert.ok(container.textContent?.includes(savedFixture.transcript));
+  assert.equal(calls.filter(path => path.endsWith('/audio')).length, 0);
+  assert.equal(container.querySelector('audio'), null);
+  assert.ok(button('Değerlendirmeyi kaydet'));
 });

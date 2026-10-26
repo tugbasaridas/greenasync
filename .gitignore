@@ -7,3 +7,9 @@ uploads/
 *.log
 .DS_Store
 coverage/
+
+.data/
+.models/
+.venv/
+__pycache__/
+*.pyc

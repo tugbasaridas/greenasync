@@ -1,0 +1,16 @@
+{
+  "version": "0.5.0",
+  "scope": "Frontend assets only; excludes speech model download, inference, audio and DB; not energy/CO2 measurement",
+  "files": [
+    {
+      "file": "index-B6NjwP3P.css",
+      "bytes": 8538,
+      "gzip_bytes": 2429
+    },
+    {
+      "file": "index-Y1eOtI3a.js",
+      "bytes": 256002,
+      "gzip_bytes": 79649
+    }
+  ]
+}

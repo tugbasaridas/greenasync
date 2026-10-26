@@ -3,10 +3,12 @@ import { config } from 'dotenv';
 import { resolve } from 'node:path';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app';
+import type { Request, Response, NextFunction } from 'express';
 config({ path: resolve(__dirname, '../../.env'), quiet: true });
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api');
+  app.use((_req: Request, res: Response, next: NextFunction) => { res.setHeader('Cache-Control', 'no-store'); res.setHeader('X-Content-Type-Options', 'nosniff'); next(); });
   app.enableShutdownHooks();
   await app.listen(Number(process.env.PORT ?? 3000), '127.0.0.1');
 }

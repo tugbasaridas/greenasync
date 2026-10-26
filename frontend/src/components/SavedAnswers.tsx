@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import type { SavedAnswer } from '../api';
-export default function SavedAnswers({ answers, token }: { answers: SavedAnswer[]; token: string }) {
-  return <section className="saved-answers" aria-labelledby="saved-title"><h2 id="saved-title">Kaydedilmiş yanıtlarım</h2>
-    <p>Bu başvurunun metinleri PostgreSQL'de saklanıyor. Sesler yalnızca aşağıdaki düğmelere basınca aktarılır.</p>
-    {answers.length ? answers.map(answer => <SavedCard key={`${answer.questionId}-${answer.updatedAt}`} answer={answer} token={token} />) : <p>Henüz kaydedilmiş yanıt yok.</p>}
+export default function SavedAnswers({ answers, token = '', audioBase = '/api/answers', title = 'Kaydedilmiş yanıtlarım' }: { answers: SavedAnswer[]; token?: string; audioBase?: string; title?: string }) {
+  return <section className="saved-answers" aria-labelledby="saved-title"><h2 id="saved-title">{title}</h2>
+    <p>Yanıt metinleri aşağıdadır. Sesler yalnızca Dinle/İndir düğmesine basınca aktarılır.</p>
+    {answers.length ? answers.map(answer => <SavedCard key={`${answer.questionId}-${answer.updatedAt}`} answer={answer} token={token} audioBase={audioBase} />) : <p>Henüz kaydedilmiş yanıt yok.</p>}
   </section>;
 }
-function SavedCard({ answer, token }: { answer: SavedAnswer; token: string }) {
+function SavedCard({ answer, token, audioBase }: { answer: SavedAnswer; token: string; audioBase: string }) {
   const [url, setUrl] = useState('');
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,7 +26,7 @@ function SavedCard({ answer, token }: { answer: SavedAnswer; token: string }) {
     try {
       let source = blobUrl.current;
       if (!source) {
-        const response = await fetch(`/api/answers/${answer.questionId}/audio`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
+        const response = await fetch(`${audioBase}/${answer.questionId}/audio`, { headers: token ? { Authorization: `Bearer ${token}` } : {}, cache: 'no-store' });
         if (!response.ok) throw new Error('Ses alınamadı. Başvuru erişimini ve dosyayı kontrol edin.');
         const blob = await response.blob();
         if (!mounted.current) return;

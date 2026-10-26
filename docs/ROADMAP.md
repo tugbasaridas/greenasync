@@ -7,8 +7,8 @@
 - [x] Türkçe konuşmayı metne dönüştürme, destek kontrolü ve elle düzeltme
 - [x] PostgreSQL tabloları, idempotent başlangıç şeması ve bağlantı
 - [x] Kalıcı dosya alanı, ses/metin gönderimi, eski dosya temizliği ve hata geri alma
-- [ ] İK girişi ve aday bağlantıları için erişim kontrolü
-- [ ] Metin öncelikli İK ekranı, isteğe bağlı dinleme/indirme
+- [x] İK girişi ve aday başvurularına erişim kontrolü
+- [x] Metin öncelikli İK ekranı, isteğe bağlı dinleme/indirme
 - [ ] Kayıt silme ve saklama süresi
 - [ ] Ölçüm ekranı ve CSV çıktısı
 - [ ] Kontrollü video karşılaştırması, Ecograder/Lighthouse raporları
@@ -18,3 +18,7 @@ Ses dinlenene kadar frontend audio src atamayacak; yalnızca preload=none
 kullanımına güvenilmeyecek. Ses uçları yetkilendirme kontrolünden geçecek.
 Web Speech API uzaktaki servisleri kullanabilir; yerel/çevrimdışı işlem
 kullanılan ortamda doğrulanmadan iddia edilmeyecek.
+
+- [x] Kayıt durunca yerel Whisper ile otomatik metin ve kalıcı kayıt
+- [x] PostgreSQL sunucusu gerektirmeyen disk tabanlı gömülü demo
+- [x] İK notları ve başvuru durumunun kaydı

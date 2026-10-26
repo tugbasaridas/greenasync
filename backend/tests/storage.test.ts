@@ -11,6 +11,8 @@ import type { INestApplication } from '@nestjs/common';
 import { AppController, SessionGuard } from '../src/app';
 import { AnswerStore } from '../src/answer-store';
 import { Database, schema } from '../src/database';
+import { HrController, HrGuard, HrService } from '../src/hr';
+import { LocalSpeech } from '../src/local-speech';
 let app: INestApplication;
 let base: string;
 let dir: string;
@@ -32,6 +34,7 @@ before(async () => {
   dir = join(tempRoot, 'audio');
   await mkdir(dir);
   process.env.UPLOAD_DIR = dir;
+  process.env.HR_PASSWORD = 'test-only-password';
   // CI uses a dedicated real PostgreSQL database; local tests use the
   // PostgreSQL WASM engine rather than an in-memory SQL imitation.
   let pool: unknown;
@@ -52,7 +55,7 @@ before(async () => {
   stranger = (await (await fetch(`${base}/applications`, { method: 'POST' })).json()).token;
 });
 async function boot() {
-  app = await NestFactory.create({ module: class Fixture {}, controllers: [AppController], providers: [AnswerStore, SessionGuard, { provide: Database, useValue: database }] }, { logger: false });
+  app = await NestFactory.create({ module: class Fixture {}, controllers: [AppController, HrController], providers: [AnswerStore, SessionGuard, HrGuard, HrService, { provide: LocalSpeech, useValue: { transcribe: async () => ({ text: 'Yerel modelden metin', duration: 2 }) } }, { provide: Database, useValue: database }] }, { logger: false });
   app.setGlobalPrefix('api');
   await app.listen(0, '127.0.0.1');
   base = `${await app.getUrl()}/api`;
@@ -134,4 +137,36 @@ test('failed database write rolls back and removes the new audio file', async ()
   assert.deepEqual(await readdir(dir), before);
   const list = await (await fetch(`${base}/answers`, { headers: auth() })).json();
   assert.equal(list[0].transcript, 'Yeni yanıt');
+});
+
+test('local transcription endpoint returns and persists text without requiring a browser transcript', async () => {
+  const body = new FormData(); body.set('duration', '2'); body.set('audio', new Blob([bytes], { type: 'audio/webm' }), 'answer.webm');
+  const response = await fetch(`${base}/answers/2/transcribe`, { method: 'POST', headers: auth(), body });
+  assert.equal(response.status, 201);
+  const answer = await response.json();
+  assert.equal(answer.transcript, 'Yerel modelden metin');
+  assert.equal(answer.questionId, 2);
+});
+test('HR requires login, reads transcripts, reviews and requests audio only on demand', async () => {
+  assert.equal((await fetch(`${base}/hr/applications`)).status, 401);
+  const login = await fetch(`${base}/hr/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'ik', password: 'test-only-password' }) });
+  assert.equal(login.status, 201);
+  const cookie = login.headers.get('set-cookie')!;
+  assert.match(cookie, /HttpOnly/i); assert.match(cookie, /SameSite=Strict/i);
+  const headers = { Cookie: cookie.split(';')[0] };
+  const result = await (await fetch(`${base}/hr/applications`, { headers })).json();
+  const candidate = result.items.find((item: any) => item.answerCount === 2);
+  assert.ok(candidate);
+  const detail = await (await fetch(`${base}/hr/applications/${candidate.id}`, { headers })).json();
+  assert.equal(detail.answers.length, 2);
+  assert.equal(detail.answers[1].transcript, 'Yerel modelden metin');
+  assert.equal('data' in detail.answers[0], false);
+  const saved = await fetch(`${base}/hr/applications/${candidate.id}/review`, { method: 'PUT', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'reviewing', note: 'Metin incelendi; ses açılmadı.' }) });
+  assert.equal(saved.status, 200);
+  assert.equal((await saved.json()).note, 'Metin incelendi; ses açılmadı.');
+  const audio = await fetch(`${base}/hr/applications/${candidate.id}/answers/2/audio`, { headers });
+  assert.equal(audio.status, 200);
+  assert.deepEqual(Buffer.from(await audio.arrayBuffer()), bytes);
+  await fetch(`${base}/hr/logout`, { method: 'POST', headers });
+  assert.equal((await fetch(`${base}/hr/applications`, { headers })).status, 401);
 });

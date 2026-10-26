@@ -1,55 +1,50 @@
 # GreenAsync
 
-Ses ve metin tabanlı, veri tüketimi ölçülebilen asenkron ön mülakat uygulaması.
-Yeşil Yazılım dersi kapsamında geliştirilmektedir.
+Ses ve metin tabanlı asenkron ön mülakat. Yeşil Yazılım ders projesi.
 
-## Hedef akış
+## Sürüm 0.5.0 — adaydan İK'ya çalışan akış
 
-Aday kamera kullanmadan sesli yanıt verir. Konuşma metne dönüştürülür ve
-adayın kontrolünden sonra sesle birlikte kaydedilir. İK önce yalnızca metni
-görür; ses yalnızca Dinle veya İndir seçilirse aktarılır. Ses sunucuda
-saklanır; dinlenmemesi sunucudaki depolamayı ortadan kaldırmaz.
+1. Aday demo mülakatını açar ve mikrofonla yanıt verir.
+2. Kayıt durunca ses otomatik olarak backend'e gönderilir.
+3. Backend yerel Whisper modeliyle Türkçe metin çıkarır ve ses/metni kaydeder.
+4. Aday metni kontrol edebilir; düzeltirse Yanıtı kaydet ile günceller.
+5. İK giriş yapıp başvuruları ve yanıt metinlerini görür.
+6. Ses yalnızca İK Dinle veya İndir seçerse İK cihazına aktarılır.
+7. İK notunu ve inceleme durumunu kaydeder.
 
-## Mevcut sürüm: 0.4.2 — görünür tanıma durumu ve elle yeniden deneme
-
-- Soru bazında ses kaydı ve isteğe bağlı Türkçe otomatik metin.
-- Giriş mikrofonu seçimi ve yalnızca kayıt sırasında çalışan seviye göstergesi.
-- Kayıt düğmesinin üstünde her zaman görünen otomatik metin durumu.
-- Kayıt sırasında doğrudan tıklamayla tanımayı yeniden başlatma; eski metni koruma.
-- Tanıma başlamazsa 8 saniye sonunda açıklayıcı hata; ses kaydı devam eder.
-- Düşük/sessiz giriş, oynatma sorunu ve tanıma hata kodlarını gösterme.
-- Destekleyen tarayıcıda kayıt ve tanıma için aynı ses izini kullanma.
-- Kayıttan sonra metni kontrol edip “Yanıtı kaydet” ile kalıcı gönderme.
-- Metin ve dosya bilgileri PostgreSQL'de, ses <repo>/uploads/audio içinde.
-- Yeniden açılışta aynı tarayıcıdaki başvurunun metinlerini getirme.
-- Kaydedilen sesi yalnızca Dinle/İndir isteğiyle alma.
-- Yalnızca metni güncellerken sesi tekrar göndermeme.
-- Yeni ses kaydedilince önceki dosyayı silme; hatada işlemi geri alma.
-- Başvuruya özel rastgele erişim anahtarı; veritabanında yalnızca özeti tutulur.
-
-**Kaydetmediğiniz taslaklar sayfa yenilenince silinir.** Erişim anahtarı bu
-tarayıcının localStorage alanında tutulur; tarayıcı verileri silinirse kayıtlar
-sunucuda kalır fakat bu aşamada aynı başvuruya geri dönüş yolu bulunmaz.
-Anahtarı paylaşmayın. Henüz İK hesabı/rolü ve genel aday yönetimi yoktur.
-Uygulama yerel demo içindir; üretim yayını henüz hazırlanmadı.
-
-Otomatik metin seçilirse tarayıcının tanıma hizmeti sesi harici bir serviste
-işleyebilir. Cihaz üstü veya çevrimdışı çalışma garanti edilmez. Henüz
-tasarruf veya karbon sonucu ölçülmedi.
+Tarayıcının Web Speech API'si isteğe bağlı canlı önizlemedir. Kalıcı metnin
+tek kaynağı değildir. Yerel model kurulmadan otomatik kalıcı metin çalışmaz.
+Dönüştürme süresi kayıt uzunluğuna ve işlemciye bağlıdır; anlık sonuç garanti edilmez.
 
 ## Gereksinimler
 
-- Node.js 22.12 veya üstü (Node 22 LTS önerilir), npm
+- Node.js 22.12 veya üstü ve npm
 - Git
-- Kalıcı kayıt için çalışan PostgreSQL (veya Docker)
+- Yerel model kurulumu için Python 3.11/3.12 önerilir (64 bit; 3.10–3.13 desteklenir)
+- İlk Python/model indirmesi için internet
 
-## Yerelde çalıştırma
+**Ayrı PostgreSQL sunucusu veya pgAdmin zorunlu değil.** DATABASE_URL yoksa
+PGlite ile aynı PostgreSQL şeması disk üzerinde çalışır. Mevcut PostgreSQL
+kullanmak isteyenler DATABASE_URL tanımlayabilir.
+
+## Güncelleme ve ilk kurulum
 
 ```bash
 git clone https://github.com/tugbasaridas/greenasync.git
 cd greenasync
 npm ci
+npm run setup:speech
 ```
+
+Repo zaten varsa git clone yerine `git pull` kullanın. `setup:speech`, proje
+kökünde `.venv` oluşturur, Python bağımlılıklarını ve çok dilli Whisper tiny
+modelini indirir. İndirme/kurulum başarısızsa komut hata verir; son mesajda
+“Yerel konuşma modeli hazır” görülmeden kurulmuş kabul etmeyin. Model
+çalışırken dosyalar yalnızca yerel önbellekten açılır.
+
+Önceki `.env` dosyanızda çalışmayan DATABASE_URL varsa o satırın başına `#`
+koyun. İsterseniz `.env.example` dosyasını `.env` olarak kopyalayabilirsiniz.
+Backend kökteki `.env` dosyasını otomatik okur.
 
 Birinci terminal:
 
@@ -63,17 +58,80 @@ npm run dev:backend
 npm run dev:frontend
 ```
 
-Tarayıcı: http://localhost:5173
+Adres: http://localhost:5173
 
-“Demo mülakatını aç” düğmesi soruları getirir. Bir soruda “Kaydı başlat” ile
-mikrofon izni verin; konuşup “Kaydı durdur” ile önizlemeyi açın.
-Otomatik metin istiyorsanız kayıt başlamadan “Konuşmayı otomatik metne çevir”
-seçeneğini işaretleyin. Tanıma bitince veya kesilince kendi kendine yeniden
-başlatılmaz. Kayıt sonunda son kelimeler eksik olabilir; metni kontrol edin. Kayıt
-süre sınırında otomatik durur. Yeniden kayıt başarılı başladığında önceki
-yanıtın yerini alır. Mikrofon için localhost veya HTTPS gerekir.
-Sağlık kontrolü: http://localhost:3000/api/health
-Vite /api isteklerini yerel NestJS sunucusuna yönlendirir.
+## Aday denemesi
+
+Aday bölümünde bir demo adı yazın ve Demo mülakatını aç düğmesine basın.
+Kaydı başlatın, konuşun ve Kaydı durdur düğmesine basın. Ayrı bir Gönder
+adımı beklenmeden yerel metne dönüştürme ve kalıcı kayıt başlar. İşlem
+bitene kadar ilerleme mesajı görünür. Model yoksa veya hata verirse ses
+sekmede korunur; Yerel metne çevirmeyi tekrar dene düğmesiyle denenebilir.
+
+Başarılı sonuç Yanıt metni ve Kaydedilmiş yanıtlarım bölümünde görünür.
+Metni düzelttikten sonra Yanıtı kaydet ile güncelleyin; ses tekrar gönderilmez.
+Yanıt süresi, modelin çözdüğü gerçek ses süresinden alınır. Süre ve boyut
+sınırları sunucuda da denetlenir.
+
+Başvurunun erişim anahtarı bu tarayıcının localStorage alanındadır. Tarayıcı
+verileri silinirse aynı aday bağlantısına geri dönüş bu sürümde yoktur;
+kayıtlar İK listesinde kalır. Kaydedilmeyen taslaklar sayfa yenilenince silinir.
+
+## İK denemesi
+
+Üstte **İK paneli** düğmesine basın. Varsayılan kullanıcı adı `ik`.
+
+Backend ilk açılışta rastgele şifre üretir ve kökteki
+`.data/hr-password.txt` dosyasına yazar. Bu dosyayı bilgisayarınızda açıp
+şifreyi giriş formuna girin; GitHub'a yüklemeyin. Terminalde dosya yolu
+belirtilir. Kendi şifrenizi kullanmak için `.env` içinde:
+
+```dotenv
+HR_USERNAME=ik
+HR_PASSWORD=EN_AZ_8_KARAKTERLIK_KENDI_SIFRENIZ
+```
+
+Değişiklikten sonra backend'i yeniden başlatın. İK oturumu HttpOnly ve
+SameSite=Strict çereziyle korunur, 8 saat sonra veya backend yeniden
+başlatılınca sona erer. Başvuru erişim anahtarı İK yetkisi vermez.
+
+İK aday seçince sadece metinler ve dosya bilgileri gelir. Dinle/İndir
+seçilmedikçe ses istenmez. İK notu ve durum seçimi kalıcı kaydedilir.
+Listeler 20 başvuru halinde sayfalanır; sürekli polling yapılmaz.
+
+## Kalıcı veriler ve model
+
+- `.data/postgres/`: gömülü PostgreSQL verileri
+- `.data/hr-password.txt`: yerel demo İK şifresi
+- `uploads/audio/`: ses dosyaları
+- `.models/`: yerel konuşma modeli önbelleği
+- `.venv/`: Python ortamı
+
+Hepsi git dışındadır. Yedekleme için veritabanı ve ses alanını birlikte
+koruyun. Model dosyaları yeniden indirilebilir. `.data` silinirse gömülü
+veritabanı ve üretilmiş İK şifresi kaybolur.
+
+UPLOAD_DIR ve DATA_DIR ile kalıcı mutlak dizinler seçilebilir. Tek demo
+backend örneği çalıştırın; PGlite aynı veri dizinine birden çok backend
+bağlanması için tasarlanmamıştır. İsteğe bağlı harici PostgreSQL için
+compose.yaml veya DATABASE_URL kullanılabilir.
+
+## Yeşil yazılım kararları
+
+- Kamera açılmadan sıkıştırılmış ses kaydı; 32 kbps ve mono hedefi.
+- Yerel model CPU/int8 ve iki iş parçacığıyla çalışır; modele aynı anda tek iş verilir.
+- Model istekler arasında yeniden kullanılır; iki dakika boşta kalınca süreç kapanır.
+- Model indirmesi yalnızca kurulumda yapılır; işletimde ses harici ASR servisine gitmez.
+- İK metin öncelikli inceler; ses isteğe bağlı alınır ve aynı sekmede tekrar kullanılır.
+- Metin düzeltmesi sesi tekrar yüklemez; yeni ses eski dosyanın yerini alır.
+- Harici font, video arka planı, animasyon paketi ve takip betiği kullanılmaz.
+- Kaydı durdurunca mikrofon, seviye analiz kaynağı ve zamanlayıcılar kapatılır.
+
+Yerel modelin CPU/bellek maliyeti vardır. Bu seçim tek başına enerji tasarrufu
+kanıtı değildir. Kontrollü karşılaştırma ve Ecograder ölçümleri henüz yapılmadı.
+Kayıt saklama süresi, toplu silme ve üretim yayını sonraki aşamalardır.
+
+## Kontroller
 
 ```bash
 npm test
@@ -81,119 +139,10 @@ npm run typecheck
 npm run build
 ```
 
-Build statik ön yüzü frontend/dist, API dosyalarını backend/dist içine üretir.
-Bu kurulum yerel geliştirme içindir; internete açık üretim yayını hazırlanmadı.
+Otomatik testler kayıt/tanıma akışını taklit medya API'leriyle, kayıt/İK
+API'sini PostgreSQL motoruyla sınar. TEST_DATABASE_URL verilirse yalnızca
+ayrı test veritabanı kullanın. CI PostgreSQL 17 servisini kullanır.
+Gerçek yerel modelle ayrıca Türkçe sentetik bir ses örneği sınandı;
+sonuç ve sınırlar docs/measurements/local-speech-e2e.md dosyasındadır.
 
-## PostgreSQL kurulumu
-
-Kök dizindeki `.env.example` dosyasını `.env` adıyla kopyalayın. Backend bu
-dosyayı otomatik okur. `.env` GitHub'a eklenmez.
-
-**Mevcut PostgreSQL kullanıyorsanız:** pgAdmin üzerinden boş bir `greenasync`
-veritabanı oluşturun. `.env` içinde kendi kullanıcı, parola ve portunuzu yazın:
-
-```dotenv
-DATABASE_URL=postgresql://postgres:KENDI_PAROLANIZ@127.0.0.1:5432/greenasync
-```
-
-Paroladaki `@`, `#`, `:` gibi özel karakterleri URL biçiminde kodlayın.
-
-**Docker kullanıyorsanız:** `.env` içindeki POSTGRES_PASSWORD ve DATABASE_URL
-parolasını aynı olacak şekilde değiştirin, sonra:
-
-```bash
-docker compose up -d
-```
-
-Backend'i yeniden başlatın. İlk bağlantıda idempotent başlangıç şeması otomatik
-oluşturulur; bu aşamada uygulama ve yanıt tabloları açılır. DATABASE_URL yoksa
-soru ve yerel kayıt denemesi çalışır, kalıcı işlemler açıklayıcı 503 yanıtı verir.
-Yanlış bağlantı tanımlanırsa backend başlangıcı başarısız olur.
-
-Varsayılan ses alanı repo kökündeki `uploads/audio/` dizinidir ve git dışındadır.
-`UPLOAD_DIR` ile kalıcı bir mutlak dizin seçilebilir. PostgreSQL verisi ve ses
-klasörü birlikte korunmalıdır; Docker volume yalnızca veritabanını tutar.
-`docker compose down -v` veritabanı verilerini siler.
-
-Kaydın kalıcılığını denemek için: yanıt kaydedin, sayfayı yenileyin, demo
-mülakatını açın. “Kaydedilmiş yanıtlarım” bölümünde önce metin gelmeli;
-Dinle/İndir'e basılmadan ses isteği yapılmamalı.
-
-## Yeşil yazılım kararları
-
-- Kamera açılmadan ses kaydı; mono ve 32 kbps hedefi (tarayıcı gerçek ayarları değiştirebilir).
-- İsteğe bağlı otomatik metin; hata durumunda ses kaydı devam eder.
-- Kayıt durunca tanıma iptal edilerek kendi mikrofon erişimi de sonlandırılır.
-- Sunucuda ses ve PostgreSQL'de metin saklama.
-- Adayın kayıtlı yanıtlarında metin öncelikli listeleme ve isteğe bağlı ses aktarımı.
-- İK hesabı ve değerlendirme ekranı (uygulanacak).
-- Sınırlı kayıt süresi ve durdurunca mikrofonu kapatma.
-- Sunucudaki eski kayıtları silme (uygulanacak).
-- Ana sayfada harici font, video, görsel paketi ve takip betiği kullanılmaması.
-- Polling yerine kullanıcının isteğiyle soru getirme.
-- Ölçümle doğrulanmayan tasarruf yüzdesi sunulmaması.
-
-Konuşma tanıma tarayıcıya göre uzak servis kullanabilir; cihaz üstü veya
-çevrimdışı çalışma varsayılmaz. Aday otomatik metni kontrol edip düzeltebilir.
-
-## Dosyalar
-
-- frontend/: React + TypeScript + Vite
-- backend/: NestJS API
-- docs/ROADMAP.md: geliştirme sırası
-- docs/measurements/: ölçüm yöntemi ve ileride gerçek raporlar
-
-Gerçek aday bilgileri, ses dosyaları ve .env GitHub'a yüklenmemelidir.
-GitHub kodu saklar; kalıcı ses depolama ve HTTPS uygulama yayını ayrıca kurulacak.
-
-## Doğrulama
-
-`npm test` kayıt/tanıma akışını taklit medya API'leriyle; kayıt API'sini yerel
-PostgreSQL WASM motoru (PGlite) ile sınar. TEST_DATABASE_URL varsa testler o
-**ayrı test veritabanında** çalışır; kendi başvuru veritabanınızı vermeyin.
-GitHub Actions, PostgreSQL 17 servisiyle aynı HTTP testlerini çalıştırır.
-Gerçek mikrofon ve konuşma tanıma doğruluğu otomatik olarak sınanmaz.
-Gerçek mikrofon, codec, ses kalitesi ve tarayıcı uyumluluğu için
-[elle kontrol listesi](docs/RECORDING-QA.md) uygulanmalıdır.
-
-## Kayıt sessiz veya metin oluşmuyor
-
-PostgreSQL, yerel ses kaydı ve konuşma tanıma için gerekli değildir. Veritabanı
-kurulu değilse .env içinde DATABASE_URL satırını yorum yapın ve backend'i
-yeniden başlatın. Demo açılınca kalıcı kayıt kapalı olsa da ses/metin denenebilir.
-
-1. Chrome'da localhost için mikrofon izni verin.
-2. Giriş mikrofonunu seçin. İzin sonrasında listeyi yenileyerek cihaz adlarını görün.
-3. Önce otomatik metin kapalıyken 10 saniye ses kaydedin. Konuşurken seviye
-  göstergesi hareket etmeli. Durdurup oynatıcıdaki düğmeyle dinleyin.
-4. Seviye hiç hareket etmiyorsa Windows Ayarlar > Sistem > Ses > Giriş
-  bölümünde aynı mikrofonu test edin; fiziksel sessiz düğmesini kontrol edin.
-5. Sonra otomatik metin kutusunu işaretleyip yeni kayıt açın. Tanıma
-  başlamasını bekleyin. Hata olursa ekrandaki kodu not edin.
-
-Seviye göstergesi sesin hoparlöre verilmesi değildir. Geri beslemeyi önlemek
-için canlı mikrofon sesi hoparlöre bağlanmaz. Gösterge 250 ms'de bir örneklenir
-ve kayıt sonunda Web Audio kaynağı kapatılır. Sessizlik uyarısı yaklaşık
-bir eşiktir; sesin anlaşılabilirliğini kanıtlamaz.
-
-Eski tarayıcılarda tanıma verilen ses izini desteklemeyip varsayılan mikrofonu
-kullanabilir; Chrome varsayılan mikrofonunu da doğru seçin. `network` hatası
-tarayıcının tanıma hizmetine bağlanamadığını belirtir; PostgreSQL ile ilgili değildir.
-
-Resmi yardım:
-- https://support.google.com/chrome/answer/2693767
-- https://support.microsoft.com/en-us/windows/hardware/drivers/how-to-set-up-and-test-microphones-in-windows
-- https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition/start
-
-### Metin alanı boş ve durum mesajı görünmüyorsa
-
-Ana sayfa sürümü 0.4.2 olmalı. Git pull sonrası Vite'ı yeniden başlatın ve
-tarayıcıda Ctrl+Shift+R ile yenileyin. Kayıt düğmesinin üstünde Metne çevirme
-durumu her zaman görünür: Kapalı, Hazır, Başlatılıyor, Dinliyor, Durduruldu
-veya Hata. Kayıt sırasında Metne çevirmeyi tekrar başlat düğmesi tanımayı
-doğrudan kullanıcı tıklamasıyla açar; bu denemede tarayıcının varsayılan
-mikrofonu kullanılır ve önceki kelimeler korunur. Otomatik yeniden başlatma
-döngüsü yoktur. Hizmet başlamazsa 8 saniye sonra hata gösterilir.
-
-Bu düzenleme tarayıcının harici tanıma hizmetine erişimini garanti etmez.
-Gerçek hizmetin yanıtı ve hata kodu kullanılan bilgisayarda kontrol edilmelidir.
+Bu bir yerel ders prototipidir. İnternete açık üretim yayını hazırlanmadı.
