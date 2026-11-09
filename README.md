@@ -146,3 +146,20 @@ Gerçek yerel modelle ayrıca Türkçe sentetik bir ses örneği sınandı;
 sonuç ve sınırlar docs/measurements/local-speech-e2e.md dosyasındadır.
 
 Bu bir yerel ders prototipidir. İnternete açık üretim yayını hazırlanmadı.
+
+## Tekrarlanabilir karşılaştırma ölçümleri
+
+Ölçüm aracı ve adımlar: [deney kılavuzu](docs/measurements/README.md).
+Mevcut Python ortamıyla çalışır; ayrı FFmpeg kurulumu gerektirmez.
+
+```bash
+npm run measure -- --help
+npm run measure -- media --video measurements/private/yanit.mp4 --transcribe --runs 3 --out measurements/private/deney-01
+```
+
+Video içindeki aynı konuşmadan Opus ses çıkarır; ses+metin dosya yükünü,
+model açılışını ve ilk/ısınmış dönüşüm sürelerini JSON/CSV/Markdown olarak
+raporlar. Network HAR ölçümü ayrı alt komuttur. Gerçek aday verileri ve ham
+HAR dosyaları git dışında tutulur. Enerji/karbon sonucu üretilmez. Kontrollü
+mülakat deneyi ve yayın adresinde EcoGrader/Lighthouse ölçümleri hâlâ bekliyor.
+

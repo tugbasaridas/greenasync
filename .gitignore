@@ -13,3 +13,7 @@ coverage/
 .venv/
 __pycache__/
 *.pyc
+
+# Raw experiment files may contain voice, images, transcripts and HAR bodies.
+measurements/private/
+
