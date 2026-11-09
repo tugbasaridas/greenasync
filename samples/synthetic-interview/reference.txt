@@ -1,0 +1,9 @@
+Merhaba, ben Deniz. Bu kayıt, GreenAsync projesinin karşılaştırma deneyi için hazırlanmış yapay bir mülakat örneğidir. Gerçek bir aday başvurusu değildir.
+
+Bir ekip projesinde karşılaştığım sorunu anlatmak istiyorum. Üniversitede geliştirdiğimiz bir web uygulamasında aynı verinin her sayfa açılışında tekrar tekrar istendiğini fark ettik. Bu durum hem ekranların geç açılmasına hem de gereksiz ağ trafiğine neden oluyordu.
+
+Önce ekip arkadaşlarımla tarayıcının ağ panelini inceledik. Hangi isteklerin tekrarlandığını belirledik. Ardından yalnızca gerekli alanları döndüren bir uç nokta hazırladık ve değişmeyen bilgileri kısa süreli önbellekte tuttuk.
+
+Ben arayüzdeki istekleri düzenledim. Bir arkadaşım sunucu tarafını geliştirdi. Sonrasında aynı senaryoyu yeniden çalıştırıp istek sayılarını ve aktarılan veriyi karşılaştırdık. Ölçüm yapmadan kesin bir tasarruf oranı söylemedik.
+
+Bu deneyim bana, bir sorunu önce gözlemlemenin, görevleri açıkça paylaşmanın ve çözümün etkisini ölçmenin önemini öğretti. GreenAsync de benzer şekilde, önce metnin incelendiği ve sesin yalnızca ihtiyaç olduğunda açıldığı bir işe alım akışı sunmayı amaçlıyor.

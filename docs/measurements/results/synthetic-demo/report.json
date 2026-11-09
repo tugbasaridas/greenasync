@@ -1,0 +1,44 @@
+{
+  "created_at": "2026-11-09T17:31:38.177936+00:00",
+  "python": "3.12.14",
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "energy_kwh": null,
+  "co2_grams": null,
+  "kind": "media",
+  "video": {
+    "bytes": 1125679,
+    "sha256": "410d3d8cd38801dc57b0a909fc9cd568ae830b8aa6d3a8c2a79a3e69c72da08c",
+    "duration_seconds": 77.088,
+    "audio_codec": "aac",
+    "video_codec": "h264",
+    "width": 1280,
+    "height": 720
+  },
+  "audio": {
+    "bytes": 305269,
+    "sha256": "8449ee19a16460247c8f48ad871a374de4119d1a45b50e1c0b7baf0afccc0cfb",
+    "duration_seconds": 77.106,
+    "audio_codec": "opus",
+    "video_codec": null,
+    "width": null,
+    "height": null
+  },
+  "audio_source": "derived from video; Opus mono 32 kbps target",
+  "transcript_utf8_bytes": 1256,
+  "greenasync_payload_bytes": 306525,
+  "payload_reduction_percent": 72.77,
+  "transcription": {
+    "model": "tiny",
+    "worker_startup_seconds": 0.5528,
+    "request_seconds": [
+      1.9703,
+      1.844,
+      1.761
+    ],
+    "first_request_seconds": 1.9703,
+    "warm_median_seconds": 1.8025,
+    "identical_transcripts": true,
+    "energy_kwh": null,
+    "co2_grams": null
+  }
+}

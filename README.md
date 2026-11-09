@@ -163,3 +163,15 @@ raporlar. Network HAR ölçümü ayrı alt komuttur. Gerçek aday verileri ve ha
 HAR dosyaları git dışında tutulur. Enerji/karbon sonucu üretilmez. Kontrollü
 mülakat deneyi ve yayın adresinde EcoGrader/Lighthouse ölçümleri hâlâ bekliyor.
 
+
+## Hazır sentetik video ile dene
+
+Kendi video kaydın olmadan ölçüm akışını denemek için Türkçe sesli, açıkça
+etiketlenmiş bir [sentetik örnek](samples/synthetic-interview/README.md) eklendi:
+
+```bash
+npm run measure:demo
+```
+
+Önce `npm run setup:speech` tamamlanmış olmalı. Bu örnek gerçek aday veya
+kamera çekimi değildir; çıkan dosya boyutu oranı gerçek mülakatlara genellenmez.
