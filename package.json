@@ -18,6 +18,7 @@
     "setup:speech": "node scripts/setup-speech.mjs",
     "measure": "node scripts/measure.mjs",
     "measure:demo": "node scripts/measure-demo.mjs",
-    "measure:serve": "node scripts/measure-server.mjs"
+    "measure:serve": "node scripts/measure-server.mjs",
+    "measure:audit": "node scripts/run-lighthouse.mjs"
   }
 }

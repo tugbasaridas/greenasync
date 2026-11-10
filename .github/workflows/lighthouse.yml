@@ -1,0 +1,41 @@
+name: Lighthouse measurement
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - frontend/**
+      - package.json
+      - package-lock.json
+      - scripts/run-lighthouse.mjs
+      - scripts/measure-server.mjs
+      - .github/workflows/lighthouse.yml
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Install isolated audit tool
+        run: npm install --prefix measurements/private/audit-tools --no-audit --no-fund lighthouse@13.6.0
+      - name: Audit production initial page three times per profile
+        shell: bash
+        run: |
+          export CHROME_PATH="$(command -v google-chrome)"
+          test -x "$CHROME_PATH"
+          node scripts/run-lighthouse.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-reports
+          path: measurements/private/lighthouse/
+          if-no-files-found: warn
+          retention-days: 14
