@@ -29,7 +29,7 @@ if (process.env.MEASURE_BOOTSTRAP === '1') {
     });
   }
 }
-const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.svg':'image/svg+xml', '.mp4':'video/mp4' };
+const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.svg':'image/svg+xml', '.mp4':'video/mp4', '.txt':'text/plain; charset=utf-8' };
 const baseline = `<!doctype html><html lang="tr"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Kontrollü video örneği</title><h1>Sentetik video karşılaştırması</h1><p>77 saniyelik aynı yanıt. Bu sayfa ticari mülakat ürünü değildir.</p><button id="load">Videoyu yükle</button><p id="status"></p><video controls preload="none" width="640"></video><script>let url; document.querySelector('#load').onclick=async()=>{if(!url){const r=await fetch('/benchmark/video.mp4',{cache:'no-store'});if(!r.ok)throw Error('video');url=URL.createObjectURL(await r.blob());document.querySelector('video').src=url;}document.querySelector('#status').textContent='Video yüklendi';};</script></html>`;
 const server = createServer(async (req, res) => {
   let phase = 'unmarked';
