@@ -1,0 +1,20 @@
+// Creates one synthetic application in a loopback-only measurement instance.
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root=fileURLToPath(new URL('../',import.meta.url));
+const base=process.env.MEASURE_API_URL || 'http://127.0.0.1:3000';
+if (!['127.0.0.1','localhost'].includes(new URL(base).hostname)) throw Error('Use an isolated loopback instance.');
+const directory=join(root,'measurements/private/ui');
+await mkdir(directory,{recursive:true});
+const session=await fetch(base+'/api/applications',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({displayName:'Sentetik ölçüm adayı'})});
+if(!session.ok)throw Error('Session creation failed');
+const {token}=await session.json();
+const audio=await readFile(join(root,'measurements/private/ui-input/derived-audio.webm'));
+const form=new FormData();form.set('audio',new Blob([audio],{type:'audio/webm'}),'answer.webm');form.set('duration','77.106');
+const started=performance.now();
+const response=await fetch(base+'/api/answers/2/transcribe',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:form});
+const result=await response.json();
+if(!response.ok || !result.transcript)throw Error('Actual transcription/storage failed: '+JSON.stringify(result));
+await writeFile(join(directory,'seed.json'),JSON.stringify({createdAt:new Date().toISOString(),transcribeAndSaveSeconds:(performance.now()-started)/1000,audioBytes:audio.length,transcriptBytes:Buffer.byteLength(result.transcript),duration:result.duration},null,2));
+console.log('Synthetic audio transcribed and saved for HR review.');

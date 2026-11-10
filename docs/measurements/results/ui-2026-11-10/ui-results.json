@@ -1,0 +1,76 @@
+{
+  "created_at": "2026-11-10T16:09:29.431253+00:00",
+  "application_commit": "10afa81505e9cabe9aa6a3172a9f19d7d01c48ee",
+  "input_type": "synthetic Turkish speech with text-card video, not camera footage",
+  "driver": "real browser UI actions, three repetitions; source server response-body counting",
+  "metric_scope": "selected endpoint response body bytes; excludes headers, TLS/TCP, initial assets, login, list, upload and server computation",
+  "runs": [
+    {
+      "run": 1,
+      "text_response_body_bytes": 1571,
+      "additional_audio_body_bytes": 305418,
+      "additional_replay_audio_bytes": 0,
+      "video_response_body_bytes": 1125679,
+      "text_audio_requests": 0,
+      "first_audio_requests": 1,
+      "replay_audio_requests": 0
+    },
+    {
+      "run": 2,
+      "text_response_body_bytes": 1571,
+      "additional_audio_body_bytes": 305418,
+      "additional_replay_audio_bytes": 0,
+      "video_response_body_bytes": 1125679,
+      "text_audio_requests": 0,
+      "first_audio_requests": 1,
+      "replay_audio_requests": 0
+    },
+    {
+      "run": 3,
+      "text_response_body_bytes": 1571,
+      "additional_audio_body_bytes": 305418,
+      "additional_replay_audio_bytes": 0,
+      "video_response_body_bytes": 1125679,
+      "text_audio_requests": 0,
+      "first_audio_requests": 1,
+      "replay_audio_requests": 0
+    }
+  ],
+  "medians": {
+    "text_response_body_bytes": 1571,
+    "additional_audio_body_bytes": 305418,
+    "additional_replay_audio_bytes": 0,
+    "video_response_body_bytes": 1125679,
+    "text_audio_requests": 0,
+    "first_audio_requests": 1,
+    "replay_audio_requests": 0,
+    "text_plus_audio_body_bytes": 306989,
+    "text_vs_video_payload_reduction_percent": 99.8604,
+    "text_audio_vs_video_payload_reduction_percent": 72.7285
+  },
+  "transcribe_and_save": {
+    "createdAt": "2026-11-10T16:00:39.779Z",
+    "transcribeAndSaveSeconds": 3.070218976,
+    "audioBytes": 305418,
+    "transcriptBytes": 1254,
+    "duration": 77.0986875
+  },
+  "accuracy_single_sample": {
+    "reference_words": 144,
+    "hypothesis_words": 142,
+    "word_edits": 34,
+    "wer_percent": 23.61,
+    "normalization": "NFC, Turkish lowercase, punctuation replaced by spaces; word Levenshtein"
+  },
+  "energy_kwh": null,
+  "actual_co2_grams": null,
+  "ecograder": {
+    "status": "not_run",
+    "reason": "No publicly accessible deployment URL available"
+  },
+  "lighthouse": {
+    "status": "blocked",
+    "version": "13.6.0",
+    "reason": "Chromium process singleton socket() Operation not permitted in audit runtime; no score produced"
+  }
+}

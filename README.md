@@ -175,3 +175,11 @@ npm run measure:demo
 
 Önce `npm run setup:speech` tamamlanmış olmalı. Bu örnek gerçek aday veya
 kamera çekimi değildir; çıkan dosya boyutu oranı gerçek mülakatlara genellenmez.
+
+## 10 Kasım 2026 gerçek İK ekranı ölçümleri
+
+[Üç koşulu rapor, JSON/CSV ve ekran kanıtı](docs/measurements/results/ui-2026-11-10/README.md) eklendi.
+Sentetik girdinin gerçek uygulama akışı ölçüldü: metin açılınca ses istenmiyor,
+ses ilk istekte aktarılıyor ve aynı kartta tekrar kullanılabiliyor. CO2.js
+model tahmini ayrıca etiketlendi. EcoGrader, Lighthouse puanı ve doğrudan
+enerji ölçümü henüz yok; nedenleri ve deney sınırları raporda açıklandı.

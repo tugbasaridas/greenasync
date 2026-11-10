@@ -7,9 +7,30 @@ import unittest
 spec = importlib.util.spec_from_file_location('measure', Path(__file__).resolve().parents[1] / 'scripts/measure.py')
 measure = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(measure)
+audit_spec = importlib.util.spec_from_file_location('ui_audit', Path(__file__).resolve().parents[1] / 'scripts/summarize-ui-measurement.py')
+ui_audit = importlib.util.module_from_spec(audit_spec)
+audit_spec.loader.exec_module(ui_audit)
 
 
 class MeasurementTests(unittest.TestCase):
+    def test_wer_normalization_and_word_edits(self):
+        result = ui_audit.wer('İyi, bir ekip işi.', 'iyi bir işi')
+        self.assertEqual(result['word_edits'], 1)
+        self.assertEqual(result['wer_percent'], 25)
+        self.assertEqual(ui_audit.wer('IŞIK', 'ışık')['word_edits'], 0)
+
+    def test_ui_report_requires_complete_successful_runs(self):
+        with self.assertRaises(ValueError):
+            ui_audit.summarize([])
+        rows = []
+        for i in range(1, 4):
+            for phase, route in [('text', '/api/hr/applications/:id'), ('audio', '/api/hr/applications/:id/answers/2/audio'), ('video', '/benchmark/video.mp4')]:
+                rows.append({'phase':f'{phase}-{i}', 'route':route, 'status':200, 'responseBodyBytes':100})
+        self.assertEqual(len(ui_audit.summarize(rows)), 3)
+        rows.append({'phase':'text-1', 'route':'/api/hr/applications/:id/answers/2/audio', 'status':200, 'responseBodyBytes':100})
+        with self.assertRaises(ValueError):
+            ui_audit.summarize(rows)
+
     def har(self, entries):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'capture.har'

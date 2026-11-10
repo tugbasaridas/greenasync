@@ -1,0 +1,74 @@
+[
+  {
+    "at": "2026-11-10T16:02:24.160Z",
+    "phase": "text-1",
+    "method": "GET",
+    "route": "/api/hr/applications/:id",
+    "status": 200,
+    "responseBodyBytes": 1571
+  },
+  {
+    "at": "2026-11-10T16:02:53.996Z",
+    "phase": "audio-1",
+    "method": "GET",
+    "route": "/api/hr/applications/:id/answers/2/audio",
+    "status": 200,
+    "responseBodyBytes": 305418
+  },
+  {
+    "at": "2026-11-10T16:03:29.153Z",
+    "phase": "text-2",
+    "method": "GET",
+    "route": "/api/hr/applications/:id",
+    "status": 200,
+    "responseBodyBytes": 1571
+  },
+  {
+    "at": "2026-11-10T16:03:38.804Z",
+    "phase": "audio-2",
+    "method": "GET",
+    "route": "/api/hr/applications/:id/answers/2/audio",
+    "status": 200,
+    "responseBodyBytes": 305418
+  },
+  {
+    "at": "2026-11-10T16:04:11.336Z",
+    "phase": "text-3",
+    "method": "GET",
+    "route": "/api/hr/applications/:id",
+    "status": 200,
+    "responseBodyBytes": 1571
+  },
+  {
+    "at": "2026-11-10T16:04:21.691Z",
+    "phase": "audio-3",
+    "method": "GET",
+    "route": "/api/hr/applications/:id/answers/2/audio",
+    "status": 200,
+    "responseBodyBytes": 305418
+  },
+  {
+    "at": "2026-11-10T16:05:25.459Z",
+    "phase": "video-1",
+    "method": "GET",
+    "route": "/benchmark/video.mp4",
+    "status": 200,
+    "responseBodyBytes": 1125679
+  },
+  {
+    "at": "2026-11-10T16:05:54.103Z",
+    "phase": "video-2",
+    "method": "GET",
+    "route": "/benchmark/video.mp4",
+    "status": 200,
+    "responseBodyBytes": 1125679
+  },
+  {
+    "at": "2026-11-10T16:06:07.680Z",
+    "phase": "video-3",
+    "method": "GET",
+    "route": "/benchmark/video.mp4",
+    "status": 200,
+    "responseBodyBytes": 1125679
+  }
+]

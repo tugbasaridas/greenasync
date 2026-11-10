@@ -1,0 +1,75 @@
+{
+  "type": "MODEL_ESTIMATE_NOT_MEASURED_EMISSIONS",
+  "package": "@tgwf/co2",
+  "package_version": "0.19.0",
+  "model": "SWD",
+  "model_version": 4,
+  "assumptions": "Default global intensities; green hosting false; hypothetical internet delivery of selected payloads. Not the actual local test machine emissions.",
+  "exclusions": "Whisper computation, recording, initial upload, initial page assets, storage lifetime, model download, headers and transport overhead are not measured in these inputs.",
+  "source": "https://developers.thegreenwebfoundation.org/co2js/models/overview/",
+  "estimates": {
+    "text": {
+      "co2": 0.00023282220000000003,
+      "green": false,
+      "variables": {
+        "description": "Below are the variables used to calculate this CO2 estimate.",
+        "bytes": 1571,
+        "gridIntensity": {
+          "description": "The grid intensity (grams per kilowatt-hour) used to calculate this CO2 estimate.",
+          "device": {
+            "value": 494
+          },
+          "dataCenter": {
+            "value": 494
+          },
+          "network": {
+            "value": 494
+          }
+        },
+        "greenHostingFactor": 0
+      }
+    },
+    "text_plus_audio": {
+      "co2": 0.0454957698,
+      "green": false,
+      "variables": {
+        "description": "Below are the variables used to calculate this CO2 estimate.",
+        "bytes": 306989,
+        "gridIntensity": {
+          "description": "The grid intensity (grams per kilowatt-hour) used to calculate this CO2 estimate.",
+          "device": {
+            "value": 494
+          },
+          "dataCenter": {
+            "value": 494
+          },
+          "network": {
+            "value": 494
+          }
+        },
+        "greenHostingFactor": 0
+      }
+    },
+    "video": {
+      "co2": 0.16682562780000001,
+      "green": false,
+      "variables": {
+        "description": "Below are the variables used to calculate this CO2 estimate.",
+        "bytes": 1125679,
+        "gridIntensity": {
+          "description": "The grid intensity (grams per kilowatt-hour) used to calculate this CO2 estimate.",
+          "device": {
+            "value": 494
+          },
+          "dataCenter": {
+            "value": 494
+          },
+          "network": {
+            "value": 494
+          }
+        },
+        "greenHostingFactor": 0
+      }
+    }
+  }
+}
