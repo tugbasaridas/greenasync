@@ -4,6 +4,10 @@
 77 saniyelik Türkçe **sentetik** örnektir; kamera çekimi değildir. EcoGrader
 puanı ve Lighthouse puanı bu raporda yoktur. Karbon değerleri model tahminidir.
 
+**Sonraki güncelleme:** Lighthouse deneyi GitHub test makinesinde tamamlandı.
+[Gerçek önce/sonra raporu](../lighthouse-2026-11-10/README.md). Aşağıdaki
+yerel başarısız deneme bilgisi, bu İK deneyinin tarihsel kaydı olarak korundu.
+
 ## Ne yaptık?
 
 1. React ve NestJS üretim derlemelerini hazırladık. Disk tabanlı PGlite ve ayrı,
@@ -138,7 +142,7 @@ bir oran iddia etmiyoruz.”
 
 **Sunuma hazır kanıtlar:** üç koşulu bayt tablosu, gerçek İK ekranı, ham JSON/CSV,
 model süreleri ve tek örnek WER. **Eksik:** kamera kayıtlı daha geniş karşılaştırma,
-yayın adresi/EcoGrader, başarılı Lighthouse raporu ve doğrudan güç ölçümü.
+yayın adresi/EcoGrader ve doğrudan güç ölçümü. Lighthouse ayrı raporda tamamlandı.
 
 ![Gerçek İK ölçüm ekranı](hr-evidence.png)
 

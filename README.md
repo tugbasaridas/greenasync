@@ -161,7 +161,8 @@ Video içindeki aynı konuşmadan Opus ses çıkarır; ses+metin dosya yükünü
 model açılışını ve ilk/ısınmış dönüşüm sürelerini JSON/CSV/Markdown olarak
 raporlar. Network HAR ölçümü ayrı alt komuttur. Gerçek aday verileri ve ham
 HAR dosyaları git dışında tutulur. Enerji/karbon sonucu üretilmez. Kontrollü
-mülakat deneyi ve yayın adresinde EcoGrader/Lighthouse ölçümleri hâlâ bekliyor.
+kamera kaydı deneyi ve yayın adresinde EcoGrader ölçümü hâlâ bekliyor.
+Lighthouse deneyi aşağıdaki ayrı raporda tamamlandı.
 
 
 ## Hazır sentetik video ile dene
@@ -181,5 +182,12 @@ kamera çekimi değildir; çıkan dosya boyutu oranı gerçek mülakatlara genel
 [Üç koşulu rapor, JSON/CSV ve ekran kanıtı](docs/measurements/results/ui-2026-11-10/README.md) eklendi.
 Sentetik girdinin gerçek uygulama akışı ölçüldü: metin açılınca ses istenmiyor,
 ses ilk istekte aktarılıyor ve aynı kartta tekrar kullanılabiliyor. CO2.js
-model tahmini ayrıca etiketlendi. EcoGrader, Lighthouse puanı ve doğrudan
-enerji ölçümü henüz yok; nedenleri ve deney sınırları raporda açıklandı.
+model tahmini ayrıca etiketlendi. EcoGrader ve doğrudan enerji ölçümü henüz yok; nedenleri ve deney sınırları
+raporda açıklandı. Lighthouse deneyi aşağıda ayrıca tamamlandı.
+
+## Lighthouse ölçümü tamamlandı
+
+[10 Kasım 2026 önce/sonra raporu ve ham HTML/JSON dosyaları](docs/measurements/results/lighthouse-2026-11-10/README.md).
+Kontrast ve robots.txt sorunları giderildikten sonra mobil/masaüstü altı koşunun
+her birinde performans, erişilebilirlik, iyi uygulamalar ve SEO puanları 100 oldu.
+Bu, üretim ilk sayfa denetimidir; toplam enerji/karbon veya EcoGrader sonucu değildir.

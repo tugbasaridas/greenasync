@@ -11,7 +11,7 @@
 - [x] Metin öncelikli İK ekranı, isteğe bağlı dinleme/indirme
 - [ ] Kayıt silme ve saklama süresi
 - [ ] Ölçüm ekranı ve CSV çıktısı
-- [ ] Kontrollü video karşılaştırması, Ecograder/Lighthouse raporları
+- [ ] Kontrollü kamera video karşılaştırması ve EcoGrader raporu
 - [ ] HTTPS yayınlama ve sunum
 
 Ses dinlenene kadar frontend audio src atamayacak; yalnızca preload=none
@@ -22,3 +22,5 @@ kullanılan ortamda doğrulanmadan iddia edilmeyecek.
 - [x] Kayıt durunca yerel Whisper ile otomatik metin ve kalıcı kayıt
 - [x] PostgreSQL sunucusu gerektirmeyen disk tabanlı gömülü demo
 - [x] İK notları ve başvuru durumunun kaydı
+
+- [x] GitHub test makinesinde mobil/masaüstü Lighthouse ölçümü; üçer tekrar, önce/sonra ve ham raporlar
