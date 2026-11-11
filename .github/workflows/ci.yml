@@ -35,4 +35,36 @@ jobs:
         with:
           python-version: '3.14'
       - run: python -m unittest discover -s tests -p 'test_measure.py' -v
+  windows-local-demo:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Start the embedded database outside the checkout
+        shell: pwsh
+        run: |
+          $env:DATABASE_URL = 'postgresql://test:test@127.0.0.1:1/unused'
+          $log = Join-Path $env:RUNNER_TEMP 'greenasync-backend.log'
+          $errors = Join-Path $env:RUNNER_TEMP 'greenasync-backend-errors.log'
+          $backend = Start-Process cmd.exe -ArgumentList '/d','/c','npm run dev:backend:local' -PassThru -RedirectStandardOutput $log -RedirectStandardError $errors
+          try {
+            $deadline = (Get-Date).AddSeconds(60)
+            do {
+              $health = $null
+              try { $health = Invoke-RestMethod 'http://127.0.0.1:3000/api/health' -TimeoutSec 2 } catch { Start-Sleep -Milliseconds 500 }
+            } while (-not $health -and (Get-Date) -lt $deadline)
+            if ($health.status -ne 'ok' -or $health.storageMode -ne 'embedded') {
+              Get-Content $log,$errors
+              throw 'Local backend health check failed'
+            }
+            $db = Join-Path $env:LOCALAPPDATA 'GreenAsync\demo-data\postgres'
+            if (-not (Test-Path (Join-Path $db 'PG_VERSION'))) { throw 'Expected PGlite data outside the checkout' }
+          } finally {
+            if (-not $backend.HasExited) { taskkill /PID $backend.Id /T /F }
+          }
 

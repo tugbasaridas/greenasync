@@ -60,6 +60,16 @@ npm run dev:frontend
 
 Adres: http://localhost:5173
 
+### OneDrive dışındaki yerel demo veritabanı
+
+Windows'ta proje OneDrive altındaysa ve PGlite açılışı başarısız olursa backend'i
+`Ctrl+C` ile durdurup `npm run dev:backend:local` çalıştırın. Bu komut 3000
+portunda gömülü veritabanını `%LOCALAPPDATA%\GreenAsync\demo-data` altında açar.
+Diğer işletim sistemlerinde `~/.greenasync/demo-data` kullanılır. İlk çalıştırmada
+ayrı ve boş bir veritabanı açılır. Sonraki çalıştırmalar aynı klasörü kullanır.
+İK şifresi için terminalin gösterdiği dosyayı kullanın veya önceden ayarladığınız
+`HR_PASSWORD` ile giriş yapın. Sağlık kontrolü: http://127.0.0.1:3000/api/health
+
 ## Aday denemesi
 
 Aday bölümünde bir demo adı yazın ve Demo mülakatını aç düğmesine basın.
