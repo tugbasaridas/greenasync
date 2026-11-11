@@ -11,9 +11,15 @@ export class HrService implements OnModuleInit {
   private readonly salt = randomBytes(16);
   private readonly sessions = new Map<string, number>();
   private readonly failures = new Map<string, { count: number; until: number }>();
-  readonly username = process.env.HR_USERNAME || 'ik';
+  private readonly classDemo = process.env.GREENASYNC_CLASS_DEMO === 'true';
+  readonly username = this.classDemo ? 'ik' : (process.env.HR_USERNAME || 'ik');
   constructor(@Inject(Database) private readonly db: Database) {}
   async onModuleInit() {
+    if (this.classDemo) {
+      this.passwordHash = scryptSync('1234', this.salt, 64);
+      console.log(`İK sınıf demosu. Kullanıcı adı: ${this.username}`);
+      return;
+    }
     let password = process.env.HR_PASSWORD;
     if (!password) {
       const directory = resolve(process.env.DATA_DIR || join(__dirname, '../../.data'));

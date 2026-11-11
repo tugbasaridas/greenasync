@@ -10,7 +10,14 @@ const dataDir = join(appData, 'class-demo-v2');
 
 const options = {
   cwd: fileURLToPath(new URL('../', import.meta.url)),
-  env: { ...process.env, DATA_DIR: dataDir, UPLOAD_DIR: join(dataDir, 'audio'), DATABASE_URL: '', PORT: '3000' },
+  env: {
+    ...process.env,
+    GREENASYNC_CLASS_DEMO: 'true',
+    DATA_DIR: dataDir,
+    UPLOAD_DIR: join(dataDir, 'audio'),
+    DATABASE_URL: '',
+    PORT: '3000',
+  },
   stdio: 'inherit',
 };
 

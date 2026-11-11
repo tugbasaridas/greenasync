@@ -49,6 +49,8 @@ jobs:
         shell: pwsh
         run: |
           $env:DATABASE_URL = 'postgresql://test:test@127.0.0.1:1/unused'
+          $env:HR_USERNAME = 'previous-demo-user'
+          $env:HR_PASSWORD = 'previous-demo-password'
           $log = Join-Path $env:RUNNER_TEMP 'greenasync-backend.log'
           $errors = Join-Path $env:RUNNER_TEMP 'greenasync-backend-errors.log'
           $backend = Start-Process cmd.exe -ArgumentList '/d','/c','npm run dev:backend' -PassThru -RedirectStandardOutput $log -RedirectStandardError $errors
@@ -61,6 +63,12 @@ jobs:
             if ($health.status -ne 'ok' -or $health.storageMode -ne 'embedded') {
               Get-Content $log,$errors
               throw 'Local backend health check failed'
+            }
+            $loginBody = @{ username = 'ik'; password = '1234' } | ConvertTo-Json
+            $login = Invoke-RestMethod 'http://127.0.0.1:3000/api/hr/login' -Method Post -ContentType 'application/json' -Body $loginBody -SessionVariable hrSession
+            $session = Invoke-RestMethod 'http://127.0.0.1:3000/api/hr/me' -WebSession $hrSession
+            if ($login.username -ne 'ik' -or $session.username -ne 'ik') {
+              throw 'Local demo HR login failed'
             }
             $db = Join-Path $env:LOCALAPPDATA 'GreenAsync\class-demo-v2\postgres'
             if (-not (Test-Path (Join-Path $db 'PG_VERSION'))) { throw 'Expected PGlite data outside the checkout' }

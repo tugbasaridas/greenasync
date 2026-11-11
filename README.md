@@ -83,17 +83,19 @@ taslaklar sayfa yenilenince silinir.
 
 ## İK denemesi
 
-Üstte **İK paneli** düğmesine basın. Varsayılan kullanıcı adı `ik`.
+`npm run dev:backend` ile başlatılan yerel sınıf demosunda **İK paneli**
+düğmesine basıp kullanıcı adı olarak `ik`, şifre olarak `1234` girin.
 
-Backend ilk açılışta rastgele şifre üretir ve demo veri klasöründeki
-`hr-password.txt` dosyasına yazar. Terminalde yazan yolu kullanıp dosyayı
-açın ve şifreyi giriş formuna girin. Kendi şifrenizi kullanmak için `.env` içinde:
+Backend'i `npm run start:dev --workspace backend` ile başlatıyorsanız
+`.env` dosyasında kendi giriş bilgilerinizi ayarlayabilirsiniz.
 
 ```dotenv
 HR_USERNAME=ik
 HR_PASSWORD=EN_AZ_8_KARAKTERLIK_KENDI_SIFRENIZ
 ```
 
+Bu başlatma biçiminde şifre ayarlanmadıysa backend `hr-password.txt` dosyasında
+bir şifre oluşturur ve dosyanın yolunu terminale yazar.
 Değişiklikten sonra backend'i yeniden başlatın. İK oturumu HttpOnly ve
 SameSite=Strict çereziyle korunur, 8 saat sonra veya backend yeniden
 başlatılınca sona erer. Başvuru erişim anahtarı İK yetkisi vermez.
@@ -104,7 +106,7 @@ Listeler 20 başvuru halinde sayfalanır; sürekli polling yapılmaz.
 
 ## Kalıcı veriler ve model
 
-Demo veri klasörü `postgres/`, `audio/` ve `hr-password.txt` içerir. Yedekleme
+Demo veri klasörü `postgres/` ve `audio/` içerir. Yedekleme
 için bu klasörü birlikte koruyun. Model önbelleği `.models/`, Python ortamı
 `.venv/` proje kökünde kalır.
 
