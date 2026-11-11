@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, OnApplicationBootstrap, UnauthorizedException } from '@nestjs/common';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -11,9 +11,28 @@ const selectFields = 'question_id, transcript, audio_name, audio_mime, audio_byt
 const format = (row: Row): Answer => ({ questionId: row.question_id, transcript: row.transcript, audioMime: row.audio_mime, audioBytes: row.audio_bytes, duration: row.duration_seconds, updatedAt: new Date(row.updated_at).toISOString() });
 const hash = (token: string) => createHash('sha256').update(token).digest('hex');
 @Injectable()
-export class AnswerStore {
+export class AnswerStore implements OnApplicationBootstrap {
   readonly directory = resolve(process.env.UPLOAD_DIR || join(__dirname, '../../uploads/audio'));
   constructor(@Inject(Database) private readonly db: Database) {}
+  async onApplicationBootstrap() {
+    if (process.env.GREENASYNC_CLASS_DEMO !== 'true' || this.db.mode !== 'embedded') return;
+
+    const applicationId = '52e3a9e6-4e37-4d59-8bf4-9d45e1b96828';
+    const questionId = 2;
+    const existing = await this.list(applicationId);
+    if (existing.some(answer => answer.questionId === questionId)) return;
+
+    const sample = join(__dirname, '../../samples/synthetic-interview');
+    const [transcript, buffer] = await Promise.all([
+      readFile(join(sample, 'reference.txt'), 'utf8'),
+      readFile(join(sample, 'yanit.webm')),
+    ]);
+    await this.db.requirePool().query(
+      'INSERT INTO applications(id, token_hash, display_name) VALUES ($1,$2,$3) ON CONFLICT (id) DO NOTHING',
+      [applicationId, hash(randomBytes(32).toString('base64url')), 'Deniz (sentetik demo)'],
+    );
+    await this.save(applicationId, questionId, { transcript, duration: 77.106 }, { buffer, mimetype: 'audio/webm' });
+  }
   async createSession(displayName = 'Demo aday') {
     if (typeof displayName !== 'string' || !displayName.trim() || displayName.trim().length > 80) throw new BadRequestException('Aday adı 1–80 karakter olmalı.');
     const token = randomBytes(32).toString('base64url');
@@ -31,7 +50,7 @@ export class AnswerStore {
     const result = await this.db.requirePool().query(`SELECT ${selectFields} FROM answers WHERE application_id=$1 ORDER BY question_id`, [applicationId]);
     return result.rows.map(format);
   }
-  async save(applicationId: string, questionId: number, body: Record<string, unknown>, file?: Express.Multer.File) {
+  async save(applicationId: string, questionId: number, body: Record<string, unknown>, file?: Pick<Express.Multer.File, 'buffer' | 'mimetype'>) {
     const question = questions.find(q => q.id === questionId);
     if (!question) throw new BadRequestException('Geçerli bir soru seçin.');
     const transcript = typeof body.transcript === 'string' ? body.transcript.trim() : '';

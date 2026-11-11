@@ -70,6 +70,20 @@ jobs:
             if ($login.username -ne 'ik' -or $session.username -ne 'ik') {
               throw 'Local demo HR login failed'
             }
+            $applications = Invoke-RestMethod 'http://127.0.0.1:3000/api/hr/applications' -WebSession $hrSession
+            $demoId = '52e3a9e6-4e37-4d59-8bf4-9d45e1b96828'
+            $demo = @($applications.items | Where-Object { $_.id -eq $demoId })
+            if ($demo.Count -ne 1 -or $demo[0].answerCount -ne 1) {
+              throw 'Expected one synthetic application with one answer'
+            }
+            $details = Invoke-RestMethod "http://127.0.0.1:3000/api/hr/applications/$demoId" -WebSession $hrSession
+            if ($details.answers[0].questionId -ne 2 -or $details.answers[0].transcript -notlike 'Merhaba, ben Deniz.*') {
+              throw 'Expected the synthetic transcript'
+            }
+            $audio = Invoke-WebRequest "http://127.0.0.1:3000/api/hr/applications/$demoId/answers/2/audio" -WebSession $hrSession
+            if ($audio.Headers['Content-Type'] -notcontains 'audio/webm' -or $audio.RawContentLength -ne $details.answers[0].audioBytes) {
+              throw 'Expected the synthetic audio download'
+            }
             $db = Join-Path $env:LOCALAPPDATA 'GreenAsync\class-demo-v2\postgres'
             if (-not (Test-Path (Join-Path $db 'PG_VERSION'))) { throw 'Expected PGlite data outside the checkout' }
           } finally {

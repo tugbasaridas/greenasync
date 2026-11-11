@@ -85,6 +85,10 @@ taslaklar sayfa yenilenince silinir.
 
 `npm run dev:backend` ile başlatılan yerel sınıf demosunda **İK paneli**
 düğmesine basıp kullanıcı adı olarak `ik`, şifre olarak `1234` girin.
+Listede **Deniz (sentetik demo)** adlı örnek başvuru görünür. İkinci sorunun
+hazır metnini okuyabilir ve **Dinle** ile Türkçe sentetik sesi açabilirsiniz.
+Bu örnekte seslendirme için yazılan metin gösterilir. Canlı transkripsiyonu
+göstermek için **Aday** bölümünden yeni bir kayıt yapın.
 
 Backend'i `npm run start:dev --workspace backend` ile başlatıyorsanız
 `.env` dosyasında kendi giriş bilgilerinizi ayarlayabilirsiniz.

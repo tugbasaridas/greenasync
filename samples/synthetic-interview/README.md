@@ -10,6 +10,8 @@ görünür; konuşmanın başında da yapay örnek olduğu söylenir.
 - Codec: H.264 / CRF 28 ve AAC / 96 kbps hedefi; MP4 faststart.
 - Süre: yaklaşık 77 saniye. Kesin süre/boyut rapor komutuyla ölçülür.
 - `reference.txt`: seslendirilen özgün metin; modelin tanıdığı çıktı değildir.
+- `yanit.webm`: aynı kaydın yalnızca ses içeren Opus kopyası. Yerel sınıf
+  demosu, bu sesi ve referans metni Deniz'in ikinci yanıtı olarak ekler.
 - Ses üretimi harici TTS hizmetiyle yalnızca örneği hazırlarken yapılmıştır.
   Uygulamanın yerel Whisper çalışma akışı bundan ayrıdır.
 
