@@ -1,7 +1,7 @@
 {
   "name": "@greenasync/backend",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.5.1",
   "scripts": {
     "start:dev": "tsx watch src/main.ts",
     "build": "tsc -p tsconfig.json",

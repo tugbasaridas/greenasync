@@ -21,7 +21,7 @@ export class SessionGuard implements CanActivate {
 export class AppController {
   constructor(@Inject(AnswerStore) private readonly store: AnswerStore, @Inject(Database) private readonly db: Database, @Inject(LocalSpeech) private readonly speech: LocalSpeech) {}
   @Get('health')
-  health() { return { status: 'ok', service: 'greenasync-api', version: '0.5.0', storageConfigured: Boolean(this.db.pool), storageMode: this.db.mode }; }
+  health() { return { status: 'ok', service: 'greenasync-api', version: '0.5.1', storageConfigured: Boolean(this.db.pool), storageMode: this.db.mode }; }
   @Get('questions')
   questions() { return questions; }
   @Post('applications')

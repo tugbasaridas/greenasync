@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import AudioAnswer from '../src/components/AudioAnswer';
 import SavedAnswers from '../src/components/SavedAnswers';
 import HrPanel from '../src/components/HrPanel';
+import App from '../src/App';
 import type { SavedAnswer } from '../src/api';
 import type { SpeechEngine, SpeechResultEvent } from '../src/hooks/useTranscript';
 
@@ -58,12 +59,36 @@ beforeEach(async () => {
   speechStartThrows = false;
   speechNoEvents = false;
   globalThis.fetch = originalFetch;
+  window.localStorage.clear();
   delete (window as any).AudioContext;
   delete (navigator.mediaDevices as any).enumerateDevices;
   request = async () => makeStream();
   root = createRoot(container);
 });
 after(async () => { await act(async () => root.unmount()); dom.window.close(); });
+
+test('opens a new candidate when the saved token belongs to an old database', async () => {
+  window.localStorage.setItem('greenasync-session', 'old-token');
+  const requests: string[] = [];
+  globalThis.fetch = async (input, options) => {
+    requests.push(String(input));
+    if (input === '/api/questions') return Response.json([{ id: 1, text: 'Örnek soru', maxSeconds: 60 }]);
+    if (input === '/api/answers') {
+      assert.equal(new Headers(options?.headers).get('authorization'), 'Bearer old-token');
+      return Response.json({ message: 'Geçersiz anahtar' }, { status: 401 });
+    }
+    assert.equal(input, '/api/applications');
+    assert.equal(options?.method, 'POST');
+    return Response.json({ token: 'new-token' }, { status: 201 });
+  };
+  await act(async () => root.render(<App />));
+  const openDemo = [...container.querySelectorAll('button')].find(b => b.textContent?.includes('Demo mülakatını aç'));
+  assert.ok(openDemo);
+  await act(async () => openDemo.click());
+  assert.deepEqual(requests, ['/api/questions', '/api/answers', '/api/applications']);
+  assert.equal(window.localStorage.getItem('greenasync-session'), 'new-token');
+  assert.match(container.textContent ?? '', /Başvurunuz hazır/);
+});
 
 test('records audio only, stops microphone, creates preview, revokes URL on delete', async () => {
   await mount(); await click('Kaydı başlat');

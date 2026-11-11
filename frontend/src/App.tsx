@@ -2,7 +2,8 @@ import { useState } from 'react';
 import AudioAnswer from './components/AudioAnswer';
 import SavedAnswers from './components/SavedAnswers';
 import HrPanel from './components/HrPanel';
-import { api, type SavedAnswer } from './api';
+import { api, ApiError, type SavedAnswer } from './api';
+const candidateSessionKey = 'greenasync-session';
 type Question = { id: number; text: string; maxSeconds: number };
 export default function App() {
   const [view, setView] = useState<'candidate' | 'hr'>('candidate');
@@ -26,16 +27,29 @@ export default function App() {
       setStatus('Sorular hazır. Kalıcı kayıt bağlantısı kontrol ediliyor…');
       let token = sessionToken;
       let canRestore = true;
+      let stored: SavedAnswer[] = [];
       if (!token) {
-        try { token = localStorage.getItem('greenasync-session') || ''; } catch { canRestore = false; }
+        try { token = window.localStorage.getItem(candidateSessionKey) || ''; } catch { canRestore = false; }
+      }
+      if (token) {
+        try {
+          stored = await api<SavedAnswer[]>('/answers', {}, token);
+        } catch (error) {
+          if (!(error instanceof ApiError) || error.status !== 401) throw error;
+          try {
+            if (window.localStorage.getItem(candidateSessionKey) === token) window.localStorage.removeItem(candidateSessionKey);
+          } catch { canRestore = false; }
+          token = '';
+          setSessionToken('');
+          setAnswers([]);
+        }
       }
       if (!token) {
         const session = await api<{ token: string }>('/applications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ displayName }) });
         token = session.token;
-        try { localStorage.setItem('greenasync-session', token); } catch { canRestore = false; }
+        try { window.localStorage.setItem(candidateSessionKey, token); } catch { canRestore = false; }
       }
       setSessionToken(token);
-      const stored = await api<SavedAnswer[]>('/answers', {}, token);
       setAnswers(stored);
       setStatus(canRestore ? 'Başvurunuz hazır. Kaydedilen yanıtlar sayfa yenilense de aynı tarayıcıdan açılabilir.' : 'Başvurunuz hazır ancak tarayıcı erişim anahtarını saklayamıyor. Sekme kapanırsa başvuruya tekrar erişemeyebilirsiniz.');
     } catch (error) {
@@ -43,7 +57,7 @@ export default function App() {
     } finally { setLoading(false); }
   }
   return <main>
-    <header><a className="brand" href="/">GreenAsync<span>●</span></a><span className="badge">Geliştirme sürümü · 0.5.0</span></header>
+    <header><a className="brand" href="/">GreenAsync<span>●</span></a><span className="badge">Geliştirme sürümü · 0.5.1</span></header>
     <nav className="view-tabs" aria-label="Uygulama bölümü"><button className={view === 'candidate' ? '' : 'secondary'} disabled={activeQuestion !== null} onClick={() => setView('candidate')}>Aday</button><button className={view === 'hr' ? '' : 'secondary'} disabled={activeQuestion !== null} onClick={() => setView('hr')}>İK paneli</button></nav>
     {view === 'hr' ? <HrPanel /> : <>
     <section className="hero">
@@ -57,7 +71,7 @@ export default function App() {
     <section className="cards" aria-label="Planlanan mülakat akışı">
       <article><span className="number">01</span><h2>Aday yanıtlar</h2><p>Kamera yerine mikrofon. Yanıtın sesi ve adayın kontrol ettiği metni birlikte kaydedilir.</p></article>
       <article><span className="number">02</span><h2>İK önce okur</h2><p>Başvuru açıldığında metin gelir. Ses yalnızca dinleme veya indirme isteğiyle yüklenir.</p></article>
-      <article><span className="number">03</span><h2>Etki ölçülür</h2><p>Dosya boyutu, veri aktarımı ve sayfa performansı raporlanır. Sonuçlar deneylerle belirlenecek.</p></article>
+      <article><span className="number">03</span><h2>Ölçüm raporları</h2><p>Dosya boyutu, veri aktarımı ve sayfa performansı deneylerini <a href="https://github.com/tugbasaridas/greenasync/tree/main/docs/measurements/results">GitHub’da inceleyin</a>.</p></article>
     </section>
     <section className="demo" aria-labelledby="demo-title">
       <div className="section-title"><h2 id="demo-title">Demo mülakatı</h2><span>Örnek pozisyon · Yazılım geliştirici</span></div>
@@ -72,6 +86,6 @@ export default function App() {
     </section>
     {sessionToken && <SavedAnswers answers={answers} token={sessionToken} />}
     </>}
-    <footer>GreenAsync · Yeşil Yazılım ders projesi<span>Ölçülmüş tasarruf sonucu henüz yok.</span></footer>
+    <footer>GreenAsync · Yeşil Yazılım ders projesi</footer>
   </main>;
 }

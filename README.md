@@ -2,7 +2,7 @@
 
 Ses ve metin tabanlı asenkron ön mülakat. Yeşil Yazılım ders projesi.
 
-## Sürüm 0.5.0 — adaydan İK'ya çalışan akış
+## Sürüm 0.5.1 — adaydan İK'ya çalışan akış
 
 1. Aday demo mülakatını açar ve mikrofonla yanıt verir.
 2. Kayıt durunca ses otomatik olarak backend'e gönderilir.
@@ -23,9 +23,8 @@ Dönüştürme süresi kayıt uzunluğuna ve işlemciye bağlıdır; anlık sonu
 - Yerel model kurulumu için Python 3.10–3.14 (64 bit)
 - İlk Python/model indirmesi için internet
 
-**Ayrı PostgreSQL sunucusu veya pgAdmin zorunlu değil.** DATABASE_URL yoksa
-PGlite ile aynı PostgreSQL şeması disk üzerinde çalışır. Mevcut PostgreSQL
-kullanmak isteyenler DATABASE_URL tanımlayabilir.
+**Ders demosu için `npm run dev:backend` gömülü PGlite veritabanını açar.**
+Ayrı PostgreSQL sunucusu veya pgAdmin kurulumu gerekmez.
 
 ## Güncelleme ve ilk kurulum
 
@@ -42,10 +41,6 @@ modelini indirir. İndirme/kurulum başarısızsa komut hata verir; son mesajda
 “Yerel konuşma modeli hazır” görülmeden kurulmuş kabul etmeyin. Model
 çalışırken dosyalar yalnızca yerel önbellekten açılır.
 
-Önceki `.env` dosyanızda çalışmayan DATABASE_URL varsa o satırın başına `#`
-koyun. İsterseniz `.env.example` dosyasını `.env` olarak kopyalayabilirsiniz.
-Backend kökteki `.env` dosyasını otomatik okur.
-
 Birinci terminal:
 
 ```bash
@@ -60,15 +55,12 @@ npm run dev:frontend
 
 Adres: http://localhost:5173
 
-### OneDrive dışındaki yerel demo veritabanı
-
-Windows'ta proje OneDrive altındaysa ve PGlite açılışı başarısız olursa backend'i
-`Ctrl+C` ile durdurup `npm run dev:backend:local` çalıştırın. Bu komut 3000
-portunda gömülü veritabanını `%LOCALAPPDATA%\GreenAsync\demo-data` altında açar.
-Diğer işletim sistemlerinde `~/.greenasync/demo-data` kullanılır. İlk çalıştırmada
-ayrı ve boş bir veritabanı açılır. Sonraki çalıştırmalar aynı klasörü kullanır.
-İK şifresi için terminalin gösterdiği dosyayı kullanın veya önceden ayarladığınız
-`HR_PASSWORD` ile giriş yapın. Sağlık kontrolü: http://127.0.0.1:3000/api/health
+Backend komutu derleyip 3000 portunda çalıştırır. Windows'ta demo verileri
+`%LOCALAPPDATA%\GreenAsync\class-demo-v2`, diğer sistemlerde
+`~/.greenasync/class-demo-v2` altında tutulur. 0.5.1 sürümünde bu klasör ilk
+çalıştırmada boş başlar ve sonraki açılışlarda aynı kayıtlar kullanılır.
+Önceki demo klasörleri kendi konumlarında kalır.
+Sağlık kontrolü: http://127.0.0.1:3000/api/health
 
 ## Aday denemesi
 
@@ -85,16 +77,17 @@ sınırları sunucuda da denetlenir.
 
 Başvurunun erişim anahtarı bu tarayıcının localStorage alanındadır. Tarayıcı
 verileri silinirse aynı aday bağlantısına geri dönüş bu sürümde yoktur;
-kayıtlar İK listesinde kalır. Kaydedilmeyen taslaklar sayfa yenilenince silinir.
+kayıtlar ilgili veritabanının İK listesinde kalır. Backend eski bir anahtarı
+reddederse “Demo mülakatını aç” yeni bir başvuru oluşturur. Kaydedilmeyen
+taslaklar sayfa yenilenince silinir.
 
 ## İK denemesi
 
 Üstte **İK paneli** düğmesine basın. Varsayılan kullanıcı adı `ik`.
 
-Backend ilk açılışta rastgele şifre üretir ve kökteki
-`.data/hr-password.txt` dosyasına yazar. Bu dosyayı bilgisayarınızda açıp
-şifreyi giriş formuna girin; GitHub'a yüklemeyin. Terminalde dosya yolu
-belirtilir. Kendi şifrenizi kullanmak için `.env` içinde:
+Backend ilk açılışta rastgele şifre üretir ve demo veri klasöründeki
+`hr-password.txt` dosyasına yazar. Terminalde yazan yolu kullanıp dosyayı
+açın ve şifreyi giriş formuna girin. Kendi şifrenizi kullanmak için `.env` içinde:
 
 ```dotenv
 HR_USERNAME=ik
@@ -111,20 +104,14 @@ Listeler 20 başvuru halinde sayfalanır; sürekli polling yapılmaz.
 
 ## Kalıcı veriler ve model
 
-- `.data/postgres/`: gömülü PostgreSQL verileri
-- `.data/hr-password.txt`: yerel demo İK şifresi
-- `uploads/audio/`: ses dosyaları
-- `.models/`: yerel konuşma modeli önbelleği
-- `.venv/`: Python ortamı
+Demo veri klasörü `postgres/`, `audio/` ve `hr-password.txt` içerir. Yedekleme
+için bu klasörü birlikte koruyun. Model önbelleği `.models/`, Python ortamı
+`.venv/` proje kökünde kalır.
 
-Hepsi git dışındadır. Yedekleme için veritabanı ve ses alanını birlikte
-koruyun. Model dosyaları yeniden indirilebilir. `.data` silinirse gömülü
-veritabanı ve üretilmiş İK şifresi kaybolur.
-
-UPLOAD_DIR ve DATA_DIR ile kalıcı mutlak dizinler seçilebilir. Tek demo
-backend örneği çalıştırın; PGlite aynı veri dizinine birden çok backend
-bağlanması için tasarlanmamıştır. İsteğe bağlı harici PostgreSQL için
-compose.yaml veya DATABASE_URL kullanılabilir.
+Kendi PostgreSQL ve dizin ayarlarını kullanmak için `.env` dosyasında
+`DATABASE_URL`, `DATA_DIR` veya `UPLOAD_DIR` ayarlayıp
+`npm run start:dev --workspace backend` çalıştırabilirsiniz. Standart ders
+demosu için üstteki `npm run dev:backend` yeterlidir.
 
 ## Yeşil yazılım kararları
 
