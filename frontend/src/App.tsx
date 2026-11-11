@@ -4,6 +4,10 @@ import SavedAnswers from './components/SavedAnswers';
 import HrPanel from './components/HrPanel';
 import { api, ApiError, type SavedAnswer } from './api';
 const candidateSessionKey = 'greenasync-session';
+const candidateNameKey = 'greenasync-session-name';
+function storedCandidateValue(key: string) {
+  try { return window.localStorage.getItem(key) || ''; } catch { return ''; }
+}
 type Question = { id: number; text: string; maxSeconds: number };
 export default function App() {
   const [view, setView] = useState<'candidate' | 'hr'>('candidate');
@@ -13,8 +17,16 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [activeQuestion, setActiveQuestion] = useState<number | null>(null);
   const [sessionToken, setSessionToken] = useState('');
+  const [hasStoredSession, setHasStoredSession] = useState(() => Boolean(storedCandidateValue(candidateSessionKey)));
   const [answers, setAnswers] = useState<SavedAnswer[]>([]);
-  async function loadDemo() {
+  function startNewCandidate() {
+    setSessionToken('');
+    setDisplayName('');
+    setQuestions([]);
+    setAnswers([]);
+    setStatus('');
+  }
+  async function loadDemo(resume = false) {
     setLoading(true);
     setStatus('Sunucuya bağlanılıyor…');
     let demoLoaded = false;
@@ -25,19 +37,21 @@ export default function App() {
       setQuestions(data);
       demoLoaded = true;
       setStatus('Sorular hazır. Kalıcı kayıt bağlantısı kontrol ediliyor…');
-      let token = sessionToken;
+      let token = sessionToken || (resume ? storedCandidateValue(candidateSessionKey) : '');
+      let name = resume ? storedCandidateValue(candidateNameKey) : displayName.trim();
       let canRestore = true;
       let stored: SavedAnswer[] = [];
-      if (!token) {
-        try { token = window.localStorage.getItem(candidateSessionKey) || ''; } catch { canRestore = false; }
-      }
       if (token) {
         try {
           stored = await api<SavedAnswer[]>('/answers', {}, token);
         } catch (error) {
           if (!(error instanceof ApiError) || error.status !== 401) throw error;
           try {
-            if (window.localStorage.getItem(candidateSessionKey) === token) window.localStorage.removeItem(candidateSessionKey);
+            if (window.localStorage.getItem(candidateSessionKey) === token) {
+              window.localStorage.removeItem(candidateSessionKey);
+              window.localStorage.removeItem(candidateNameKey);
+              setHasStoredSession(false);
+            }
           } catch { canRestore = false; }
           token = '';
           setSessionToken('');
@@ -45,11 +59,17 @@ export default function App() {
         }
       }
       if (!token) {
-        const session = await api<{ token: string }>('/applications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ displayName }) });
+        name ||= 'Demo aday';
+        const session = await api<{ token: string }>('/applications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ displayName: name }) });
         token = session.token;
-        try { window.localStorage.setItem(candidateSessionKey, token); } catch { canRestore = false; }
+        try {
+          window.localStorage.setItem(candidateSessionKey, token);
+          setHasStoredSession(true);
+          window.localStorage.setItem(candidateNameKey, name);
+        } catch { canRestore = false; }
       }
       setSessionToken(token);
+      setDisplayName(name || 'Kayıtlı aday');
       setAnswers(stored);
       setStatus(canRestore ? 'Başvurunuz hazır. Kaydedilen yanıtlar sayfa yenilense de aynı tarayıcıdan açılabilir.' : 'Başvurunuz hazır ancak tarayıcı erişim anahtarını saklayamıyor. Sekme kapanırsa başvuruya tekrar erişemeyebilirsiniz.');
     } catch (error) {
@@ -58,14 +78,18 @@ export default function App() {
   }
   return <main>
     <header><a className="brand" href="/">GreenAsync<span>●</span></a><span className="badge">Geliştirme sürümü · 0.5.1</span></header>
-    <nav className="view-tabs" aria-label="Uygulama bölümü"><button className={view === 'candidate' ? '' : 'secondary'} disabled={activeQuestion !== null} onClick={() => setView('candidate')}>Aday</button><button className={view === 'hr' ? '' : 'secondary'} disabled={activeQuestion !== null} onClick={() => setView('hr')}>İK paneli</button></nav>
+    <nav className="view-tabs" aria-label="Uygulama bölümü"><button className={view === 'candidate' ? '' : 'secondary'} disabled={loading || activeQuestion !== null} onClick={() => setView('candidate')}>Aday</button><button className={view === 'hr' ? '' : 'secondary'} disabled={loading || activeQuestion !== null} onClick={() => setView('hr')}>İK paneli</button></nav>
     {view === 'hr' ? <HrPanel /> : <>
     <section className="hero">
       <p className="eyebrow">DAHA YEŞİL İŞE ALIM</p>
       <h1>Yanıta odaklan.<br /><span>Veri yükünü azalt.</span></h1>
       <p className="intro">Ses ve metin tabanlı ön mülakat. Adayın yanıtı metin olarak incelenir; ses, ihtiyaç olduğunda açılır.</p>
-      <label className="candidate-name" htmlFor="candidate-name">Aday adı (demo)</label><input id="candidate-name" value={displayName} maxLength={80} disabled={Boolean(sessionToken)} onChange={event => setDisplayName(event.target.value)} />
-      <button onClick={loadDemo} disabled={loading || activeQuestion !== null}>{loading ? 'Bağlanılıyor…' : questions.length ? 'Soruları yenile' : 'Demo mülakatını aç'} <span aria-hidden="true">↗</span></button>
+      <label className="candidate-name" htmlFor="candidate-name">Aday adı (demo)</label><input id="candidate-name" value={displayName} maxLength={80} disabled={loading || Boolean(sessionToken)} onChange={event => setDisplayName(event.target.value)} />
+      <div className="record-actions">
+        <button onClick={() => loadDemo()} disabled={loading || activeQuestion !== null || !displayName.trim()}>{loading ? 'Bağlanılıyor…' : sessionToken ? 'Soruları yenile' : 'Yeni aday oluştur'}</button>
+        {sessionToken ? <button className="secondary" onClick={startNewCandidate} disabled={loading || activeQuestion !== null}>Yeni aday</button>
+          : hasStoredSession && <button className="secondary" onClick={() => loadDemo(true)} disabled={loading || activeQuestion !== null}>Kayıtlı başvuruyu aç</button>}
+      </div>
       <p className="note">Kayıt durunca ses yerel konuşma modeline gönderilir; metne çevrilip otomatik kaydedilir. Modelin kurulmuş olması gerekir. İşlem birkaç saniye veya daha uzun sürebilir.</p>
     </section>
     <section className="cards" aria-label="Planlanan mülakat akışı">

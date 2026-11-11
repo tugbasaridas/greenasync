@@ -64,7 +64,9 @@ Sağlık kontrolü: http://127.0.0.1:3000/api/health
 
 ## Aday denemesi
 
-Aday bölümünde bir demo adı yazın ve Demo mülakatını aç düğmesine basın.
+Aday bölümünde bir demo adı yazın ve **Yeni aday oluştur** düğmesine basın.
+Açık bir başvurudan yeni bir adaya geçmek için önce **Yeni aday** düğmesini
+kullanın. Önceki başvuru ve kaydedilmiş yanıtları İK panelinde kalır.
 Kaydı başlatın, konuşun ve Kaydı durdur düğmesine basın. Ayrı bir Gönder
 adımı beklenmeden yerel metne dönüştürme ve kalıcı kayıt başlar. İşlem
 bitene kadar ilerleme mesajı görünür. Model yoksa veya hata verirse ses
@@ -75,11 +77,10 @@ Metni düzelttikten sonra Yanıtı kaydet ile güncelleyin; ses tekrar gönderil
 Yanıt süresi, modelin çözdüğü gerçek ses süresinden alınır. Süre ve boyut
 sınırları sunucuda da denetlenir.
 
-Başvurunun erişim anahtarı bu tarayıcının localStorage alanındadır. Tarayıcı
-verileri silinirse aynı aday bağlantısına geri dönüş bu sürümde yoktur;
-kayıtlar ilgili veritabanının İK listesinde kalır. Backend eski bir anahtarı
-reddederse “Demo mülakatını aç” yeni bir başvuru oluşturur. Kaydedilmeyen
-taslaklar sayfa yenilenince silinir.
+Bu tarayıcıdaki son başvuruya **Kayıtlı başvuruyu aç** ile dönebilirsiniz.
+Tarayıcı verileri silinirse başvuruya aday ekranından geri dönülemez;
+kayıtlar veritabanında ve İK listesinde kalır. Backend eski erişim anahtarını
+reddederse yeni başvuru açılır. Kaydedilmeyen taslaklar sayfa yenilenince silinir.
 
 ## İK denemesi
 
@@ -87,6 +88,9 @@ taslaklar sayfa yenilenince silinir.
 düğmesine basıp kullanıcı adı olarak `ik`, şifre olarak `1234` girin.
 Listede **Deniz (sentetik demo)** adlı örnek başvuru görünür. İkinci sorunun
 hazır metnini okuyabilir ve **Dinle** ile Türkçe sentetik sesi açabilirsiniz.
+Yeni başvuruları görmek için **Yenile** düğmesine basın. Bir aday seçtikten
+sonra **Önceki aday** ve **Sonraki aday** ile başvurular arasında geçin.
+Listede 20'den fazla başvuru varsa sayfa düğmeleri de görünür.
 Bu örnekte seslendirme için yazılan metin gösterilir. Canlı transkripsiyonu
 göstermek için **Aday** bölümünden yeni bir kayıt yapın.
 

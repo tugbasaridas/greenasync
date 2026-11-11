@@ -82,12 +82,30 @@ test('opens a new candidate when the saved token belongs to an old database', as
     return Response.json({ token: 'new-token' }, { status: 201 });
   };
   await act(async () => root.render(<App />));
-  const openDemo = [...container.querySelectorAll('button')].find(b => b.textContent?.includes('Demo mülakatını aç'));
-  assert.ok(openDemo);
-  await act(async () => openDemo.click());
+  await click('Kayıtlı başvuruyu aç');
   assert.deepEqual(requests, ['/api/questions', '/api/answers', '/api/applications']);
   assert.equal(window.localStorage.getItem('greenasync-session'), 'new-token');
   assert.match(container.textContent ?? '', /Başvurunuz hazır/);
+});
+
+test('starts a distinct candidate while a saved application exists', async () => {
+  window.localStorage.setItem('greenasync-session', 'existing-token');
+  const requests: string[] = [];
+  globalThis.fetch = async (input, options) => {
+    requests.push(String(input));
+    if (input === '/api/questions') return Response.json([{ id: 1, text: 'Örnek soru', maxSeconds: 60 }]);
+    assert.equal(input, '/api/applications');
+    assert.equal(options?.method, 'POST');
+    return Response.json({ token: 'distinct-token' }, { status: 201 });
+  };
+  await act(async () => root.render(<App />));
+  await click('Yeni aday oluştur');
+  assert.deepEqual(requests, ['/api/questions', '/api/applications']);
+  assert.equal(window.localStorage.getItem('greenasync-session'), 'distinct-token');
+  await click('Yeni aday');
+  assert.equal(container.querySelector<HTMLInputElement>('#candidate-name')?.value, '');
+  assert.ok(button('Kayıtlı başvuruyu aç'));
+  assert.equal(container.querySelector('.question-list'), null);
 });
 
 test('records audio only, stops microphone, creates preview, revokes URL on delete', async () => {
@@ -455,4 +473,37 @@ test('HR opens transcripts without fetching audio', async () => {
   assert.equal(calls.filter(path => path.endsWith('/audio')).length, 0);
   assert.equal(container.querySelector('audio'), null);
   assert.ok(button('Değerlendirmeyi kaydet'));
+});
+
+test('HR switches candidates and keeps page controls distinct', async () => {
+  const applications = ['Ece', 'Deniz', 'Aslı'].map((displayName, id) => ({
+    id: String(id), displayName, status: 'new', createdAt: '2026-10-26T12:00:00Z', answerCount: 1
+  }));
+  const calls: string[] = [];
+  globalThis.fetch = async input => {
+    const path = String(input);
+    calls.push(path);
+    if (path.endsWith('/me')) return Response.json({ username: 'ik' });
+    if (path.endsWith('?page=0')) return Response.json({ items: applications.slice(0, 2), hasNext: true, page: 0 });
+    if (path.endsWith('?page=1')) return Response.json({ items: applications.slice(2), hasNext: false, page: 1 });
+    const application = applications[Number(path.split('/').at(-1))];
+    assert.ok(application);
+    return Response.json({ application, answers: [{ ...savedFixture, transcript: application.displayName + ' yanıtı' }] });
+  };
+  await act(async () => { root.render(<HrPanel />); });
+  await act(async () => { container.querySelector<HTMLButtonElement>('.application-item')!.click(); });
+  assert.equal(button('Önceki aday').disabled, true);
+  await click('Sonraki aday');
+  assert.match(container.textContent ?? '', /Deniz yanıtı/);
+  assert.equal(calls.filter(path => path.includes('?page=')).length, 1);
+  await click('Sonraki aday');
+  assert.match(container.textContent ?? '', /Aslı yanıtı/);
+  assert.equal(button('Sonraki aday').disabled, true);
+  await click('Önceki aday');
+  assert.match(container.textContent ?? '', /Deniz yanıtı/);
+  await click('Sonraki sayfa');
+  assert.match(container.textContent ?? '', /İncelemek için bir aday seçin/);
+  await click('Yenile');
+  assert.match(container.querySelector('.application-item')?.textContent ?? '', /Ece/);
+  assert.equal(calls.some(path => path.endsWith('/audio')), false);
 });
