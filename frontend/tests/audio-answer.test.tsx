@@ -2,7 +2,7 @@ import { after, beforeEach, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 import React, { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
 import AudioAnswer from '../src/components/AudioAnswer';
 import SavedAnswers from '../src/components/SavedAnswers';
 import HrPanel from '../src/components/HrPanel';
@@ -13,6 +13,7 @@ import type { SpeechEngine, SpeechResultEvent } from '../src/hooks/useTranscript
 const dom = new JSDOM('<!doctype html><div id="root"></div>', { url: 'http://localhost' });
 Object.assign(globalThis, { window: dom.window, document: dom.window.document, IS_REACT_ACT_ENVIRONMENT: true });
 Object.defineProperty(globalThis, 'navigator', { value: dom.window.navigator, configurable: true });
+const { createRoot } = await import('react-dom/client');
 Object.defineProperty(window, 'isSecureContext', { value: true });
 // Media APIs are simulated: these checks cover lifecycle, not actual codecs.
 const streams: ReturnType<typeof makeStream>[] = [];
@@ -50,6 +51,12 @@ Object.assign(globalThis, { MediaRecorder: FakeRecorder });
 Object.defineProperty(navigator, 'mediaDevices', { value: { getUserMedia: (options: unknown) => { constraints = options; return request(); } } });
 const button = (text: string) => [...container.querySelectorAll('button')].find(b => b.textContent === text)!;
 async function click(text: string) { await act(async () => { button(text).click(); }); }
+async function enter(input: HTMLInputElement | HTMLTextAreaElement, value: string) {
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), 'value')!.set!.call(input, value);
+    input.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+  });
+}
 async function mount(seconds = 60, extra: Partial<React.ComponentProps<typeof AudioAnswer>> = {}) { await act(async () => { root.render(<AudioAnswer questionId={1} maxSeconds={seconds} locked={false} onBusyChange={() => {}} {...extra} />); }); }
 beforeEach(async () => {
   if (root) await act(async () => root.unmount());
@@ -96,16 +103,36 @@ test('starts a distinct candidate while a saved application exists', async () =>
     if (input === '/api/questions') return Response.json([{ id: 1, text: 'Örnek soru', maxSeconds: 60 }]);
     assert.equal(input, '/api/applications');
     assert.equal(options?.method, 'POST');
+    assert.equal(JSON.parse(String(options?.body)).displayName, 'Ece Kaya');
     return Response.json({ token: 'distinct-token' }, { status: 201 });
   };
   await act(async () => root.render(<App />));
-  await click('Yeni aday oluştur');
+  assert.equal(button('Mülakatı başlat').disabled, true);
+  await enter(container.querySelector<HTMLInputElement>('#candidate-name')!, 'Ece Kaya');
+  await click('Mülakatı başlat');
   assert.deepEqual(requests, ['/api/questions', '/api/applications']);
   assert.equal(window.localStorage.getItem('greenasync-session'), 'distinct-token');
   await click('Yeni aday');
   assert.equal(container.querySelector<HTMLInputElement>('#candidate-name')?.value, '');
   assert.ok(button('Kayıtlı başvuruyu aç'));
   assert.equal(container.querySelector('.question-list'), null);
+});
+
+test('shows one question at a time and preserves drafts across navigation', async () => {
+  globalThis.fetch = async input => input === '/api/questions'
+    ? Response.json([{ id: 1, text: 'İlk soru', maxSeconds: 60 }, { id: 2, text: 'İkinci soru', maxSeconds: 90 }])
+    : Response.json({ token: 'interview-token' }, { status: 201 });
+  await act(async () => root.render(<App />));
+  await enter(container.querySelector<HTMLInputElement>('#candidate-name')!, 'Ece Kaya');
+  await click('Mülakatı başlat');
+  const activeCard = () => container.querySelector('.question-card:not([hidden])')!;
+  assert.match(activeCard().textContent ?? '', /İlk soru/);
+  await enter(activeCard().querySelector('textarea')!, 'Geçici yanıt');
+  await act(async () => activeCard().querySelector<HTMLButtonElement>('.question-navigation button:last-child')!.click());
+  assert.match(activeCard().textContent ?? '', /İkinci soru/);
+  assert.equal(document.activeElement, activeCard().querySelector('h2'));
+  await act(async () => activeCard().querySelector<HTMLButtonElement>('.question-navigation button')!.click());
+  assert.equal(activeCard().querySelector('textarea')?.value, 'Geçici yanıt');
 });
 
 test('records audio only, stops microphone, creates preview, revokes URL on delete', async () => {

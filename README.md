@@ -64,13 +64,14 @@ Sağlık kontrolü: http://127.0.0.1:3000/api/health
 
 ## Aday denemesi
 
-Aday bölümünde bir demo adı yazın ve **Yeni aday oluştur** düğmesine basın.
+Aday bölümünde bir demo adı yazın ve **Mülakatı başlat** düğmesine basın.
 Açık bir başvurudan yeni bir adaya geçmek için önce **Yeni aday** düğmesini
 kullanın. Önceki başvuru ve kaydedilmiş yanıtları İK panelinde kalır.
 Kaydı başlatın, konuşun ve Kaydı durdur düğmesine basın. Ayrı bir Gönder
 adımı beklenmeden yerel metne dönüştürme ve kalıcı kayıt başlar. İşlem
 bitene kadar ilerleme mesajı görünür. Model yoksa veya hata verirse ses
 sekmede korunur; Yerel metne çevirmeyi tekrar dene düğmesiyle denenebilir.
+Sorular arasında **Önceki soru**, **Sonraki soru** veya soru listesiyle geçin.
 
 Başarılı sonuç Yanıt metni ve Kaydedilmiş yanıtlarım bölümünde görünür.
 Metni düzelttikten sonra Yanıtı kaydet ile güncelleyin; ses tekrar gönderilmez.

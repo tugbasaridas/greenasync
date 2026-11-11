@@ -5,6 +5,7 @@ type Application = { id: string; displayName: string; createdAt: string; answerC
 type Page = { items: Application[]; hasNext: boolean; page: number };
 const labels: Record<string, string> = { new: 'Yeni', reviewing: 'İnceleniyor', shortlisted: 'Kısa liste', rejected: 'Uygun bulunmadı' };
 const fetchPage = (index: number) => api<Page>(`/hr/applications?page=${index}`);
+const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map(word => word[0]).join('').toLocaleUpperCase('tr-TR');
 export default function HrPanel() {
   const [authenticated, setAuthenticated] = useState(false);
   const [checking, setChecking] = useState(true);
@@ -81,20 +82,30 @@ export default function HrPanel() {
     try { await list(index); } catch (error) { setStatus(error instanceof Error ? error.message : 'Liste alınamadı.'); }
     finally { setBusy(false); }
   }
-  if (checking) return <p role="status">İK oturumu kontrol ediliyor…</p>;
-  if (!authenticated) return <section className="hr-login"><p className="eyebrow">İNSAN KAYNAKLARI</p><h1>Önce metni incele.</h1><p>Ses dosyasını açmadan aday yanıtlarını okuyun ve değerlendirmenizi kaydedin.</p>
+  if (checking) return <p className="session-check" role="status">İK oturumu kontrol ediliyor…</p>;
+  if (!authenticated) return <section className="hr-login surface"><p className="eyebrow">İnsan kaynakları</p><h1>İK paneline giriş</h1><p>Başvurulara erişmek için oturum açın.</p>
     <form onSubmit={login}><label htmlFor="hr-user">Kullanıcı adı</label><input id="hr-user" value={username} onChange={event => setUsername(event.target.value)} autoComplete="username" required maxLength={80} />
       <label htmlFor="hr-pass">Şifre</label><input id="hr-pass" type="password" value={password} onChange={event => setPassword(event.target.value)} autoComplete="current-password" required maxLength={200} />
-      <button disabled={busy}>{busy ? 'Giriş yapılıyor…' : 'İK girişi'}</button></form><p className="note">İK giriş bilgileri proje kurulum açıklamasında yer alır.</p><p role="status">{status}</p></section>;
-  return <section className="hr-panel"><div className="section-title"><div><p className="eyebrow">İNSAN KAYNAKLARI</p><h1>Başvurular</h1></div><button className="secondary" onClick={async () => { await api('/hr/logout', { method: 'POST' }); setAuthenticated(false); setSelected(null); setAnswers([]); }} disabled={busy}>Çıkış yap</button></div>
-    <p>Önce metinleri okuyun. Dinle/İndir'e basmadığınız sürece ses dosyası cihazınıza aktarılmaz.</p>
-    <p role="status">{status}</p><div className="hr-layout"><aside><div className="section-title"><h2>Aday listesi</h2><button className="secondary" disabled={busy} onClick={() => navigate(0)}>Yenile</button></div>
-      {!page.items.length && <p>Henüz başvuru yok. Aday bölümünden bir kayıt gönderin.</p>}
-      {page.items.map(item => <button className={`application-item ${selected?.id === item.id ? 'selected' : ''}`} key={item.id} onClick={() => open({ id: item.id })} disabled={busy}><strong>{item.displayName}</strong><small>{item.id.slice(0, 8)} · {item.answerCount}/3 yanıt · {labels[item.status]}</small><small>{new Date(item.createdAt).toLocaleString('tr-TR')}</small></button>)}
-      {(page.page > 0 || page.hasNext) && <><p>Sayfa {page.page + 1}</p><div className="record-actions"><button className="secondary" disabled={busy || page.page === 0} onClick={() => navigate(page.page - 1)}>Önceki sayfa</button><button className="secondary" disabled={busy || !page.hasNext} onClick={() => navigate(page.page + 1)}>Sonraki sayfa</button></div></>}
-    </aside><div>{selected ? <><h2>{selected.displayName}</h2>
-      <div className="record-actions" aria-label="Adaylar arasında gezinme"><button className="secondary" disabled={busy || selectedIndex < 0 || (selectedIndex === 0 && page.page === 0)} onClick={() => moveCandidate(-1)}>Önceki aday</button><button className="secondary" disabled={busy || selectedIndex < 0 || (selectedIndex === page.items.length - 1 && !page.hasNext)} onClick={() => moveCandidate(1)}>Sonraki aday</button></div>
+      <button disabled={busy}>{busy ? 'Giriş yapılıyor…' : 'İK girişi'}</button></form><p className="form-status" role="status">{status}</p></section>;
+  return <section className="hr-panel">
+    <div className="page-heading section-title"><div><p className="eyebrow">İnsan kaynakları</p><h1>Başvurular</h1><p>Aday yanıtlarını inceleyin ve değerlendirmenizi kaydedin.</p></div><button className="secondary" onClick={async () => { await api('/hr/logout', { method: 'POST' }); setAuthenticated(false); setSelected(null); setAnswers([]); }} disabled={busy}>Çıkış yap</button></div>
+    <p className="form-status" role="status">{status}</p>
+    <div className="hr-layout">
+      <aside className="surface applicant-list" aria-labelledby="applicant-title">
+        <div className="section-title"><h2 id="applicant-title">Aday listesi</h2><button className="secondary" disabled={busy} onClick={() => navigate(0)}>Yenile</button></div>
+        {!page.items.length && <p>Henüz başvuru yok.</p>}
+        {page.items.map(item => <button className={`application-item ${selected?.id === item.id ? 'selected' : ''}`} key={item.id} aria-pressed={selected?.id === item.id} onClick={() => open({ id: item.id })} disabled={busy}>
+          <span className="avatar" aria-hidden="true">{initials(item.displayName)}</span>
+          <span className="application-summary"><strong>{item.displayName}</strong><small>{item.answerCount}/3 yanıt · {labels[item.status]}</small></span>
+        </button>)}
+        {(page.page > 0 || page.hasNext) && <div className="page-controls"><p>Sayfa {page.page + 1}</p><div className="record-actions"><button className="secondary" disabled={busy || page.page === 0} onClick={() => navigate(page.page - 1)}>Önceki sayfa</button><button className="secondary" disabled={busy || !page.hasNext} onClick={() => navigate(page.page + 1)}>Sonraki sayfa</button></div></div>}
+      </aside>
+      <div className="applicant-detail">{selected ? <>
+      <div className="surface applicant-heading">
+        <div className="applicant-identity"><span className="avatar" aria-hidden="true">{initials(selected.displayName)}</span><div><h2>{selected.displayName}</h2><p>{labels[selected.status]} · {new Date(selected.createdAt).toLocaleDateString('tr-TR')}</p></div></div>
+        <div className="record-actions" aria-label="Adaylar arasında gezinme"><button className="secondary" disabled={busy || selectedIndex < 0 || (selectedIndex === 0 && page.page === 0)} onClick={() => moveCandidate(-1)}>Önceki aday</button><button className="secondary" disabled={busy || selectedIndex < 0 || (selectedIndex === page.items.length - 1 && !page.hasNext)} onClick={() => moveCandidate(1)}>Sonraki aday</button></div>
+      </div>
       <SavedAnswers key={selected.id} title="Adayın yanıtları" answers={answers} audioBase={`/api/hr/applications/${selected.id}/answers`} />
-      <section className="review-form"><h2>Değerlendirme</h2><label htmlFor="review-status">Başvuru durumu</label><select id="review-status" value={reviewStatus} onChange={event => setReviewStatus(event.target.value)} disabled={busy}>{Object.entries(labels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select><label htmlFor="review-note">İK notu</label><textarea id="review-note" rows={5} value={note} maxLength={4000} onChange={event => setNote(event.target.value)} disabled={busy} /><button disabled={busy} onClick={saveReview}>Değerlendirmeyi kaydet</button></section></> : <div className="hr-empty"><h2>İncelemek için bir aday seçin</h2><p>Başvurunun metin dökümleri burada görünecek. Sesleri indirmek zorunda değilsiniz.</p></div>}</div></div>
+      <section className="review-form surface"><h2>Değerlendirme</h2><label htmlFor="review-status">Başvuru durumu</label><select id="review-status" value={reviewStatus} onChange={event => setReviewStatus(event.target.value)} disabled={busy}>{Object.entries(labels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select><label htmlFor="review-note">İK notu</label><textarea id="review-note" rows={4} value={note} maxLength={4000} onChange={event => setNote(event.target.value)} disabled={busy} /><button disabled={busy} onClick={saveReview}>Değerlendirmeyi kaydet</button></section></> : <div className="hr-empty surface"><h2>İncelemek için bir aday seçin</h2><p>Yanıt metinleri burada görünür. Ses kayıtlarını gerektiğinde açabilirsiniz.</p></div>}</div></div>
   </section>;
 }

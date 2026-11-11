@@ -290,23 +290,7 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
   const isBusy = transcribing || saving || phase === 'requesting' || phase === 'recording' || phase === 'stopping';
   const extension = recording?.mime.includes('mp4') ? 'm4a' : recording?.mime.includes('ogg') ? 'ogg' : 'webm';
   return <div className="answer-recorder">
-    {autoTranscribe && <div className="speech-status" role="status"><strong>Yerel otomatik metin</strong><p>{localNotice}</p>{recording && !isBusy && sessionToken && <button type="button" className="secondary" disabled={locked} onClick={() => transcribeAndSave(recording)}>Yerel metne çevirmeyi tekrar dene</button>}</div>}
-    <div className="microphone-settings">
-      <label htmlFor={`microphone-${questionId}`}>Giriş mikrofonu</label>
-      <div className="microphone-controls"><select id={`microphone-${questionId}`} disabled={isBusy || locked} value={deviceId} onChange={event => setDeviceId(event.target.value)}><option value="">Sistem varsayılanı</option>{devices.map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Mikrofon ${index + 1}`}</option>)}</select><button type="button" className="secondary" disabled={isBusy || locked} onClick={listMicrophones}>Mikrofon listesini yenile</button></div>
-      {deviceNotice && <p>{deviceNotice}</p>}
-      {inputLabel && <p>Kayıtta kullanılan cihaz: <strong>{inputLabel}</strong></p>}
-      {phase === 'recording' && <><label htmlFor={`input-level-${questionId}`}>Mikrofon giriş seviyesi</label><meter id={`input-level-${questionId}`} min={0} max={100} value={inputLevel} aria-label="Mikrofon giriş seviyesi" /><p role="status">{signalNotice}</p></>}
-    </div>
-    <details className="browser-preview" open={!autoTranscribe}><summary>İsteğe bağlı canlı tarayıcı önizlemesi</summary>
-    <div className="transcript-option">
-      <label><input type="checkbox" checked={transcript.enabled} disabled={isBusy || locked || !transcript.supported} aria-describedby={`speech-info-${questionId}`} onChange={event => transcript.setEnabled(event.target.checked)} /> Tarayıcıyla canlı metin önizlemesi (isteğe bağlı)</label>
-      <p id={`speech-info-${questionId}`}>{transcript.supported ? 'İsteğe bağlıdır. Tarayıcının tanıma hizmeti sesi harici bir servise gönderebilir; internet gerekebilir. Kayıt başlamadan önce seçin.' : 'Bu tarayıcıda otomatik metin desteklenmiyor. Ses kaydedebilir ve yanıt metnini elle yazabilirsiniz.'}</p>
-    </div>
-    <div className="speech-status" role="status" aria-live="polite"><strong>Metne çevirme: {transcript.statusLabel}</strong><p>{transcript.notice}</p>
-      {phase === 'recording' && transcript.enabled && transcript.supported && <><button type="button" className="secondary" onClick={() => transcript.retry()}>Metne çevirmeyi tekrar başlat</button><p>Bu düğme Chrome'un varsayılan mikrofonuyla tanımayı yeniden başlatır; mevcut metin korunur.</p></>}
-    </div>
-    </details>
+    <div className="recording-panel">
     <div className="recording-top"><span className={phase === 'recording' ? 'record-state active' : 'record-state'}>{phase === 'recording' ? '● Kayıtta' : 'Sesli yanıt'}</span><span className="timer" aria-label="Kayıt süresi">{clock(elapsed)} / {clock(maxSeconds)}</span></div>
     <progress value={elapsed} max={maxSeconds} aria-label="Yanıt süresi" />
     <div className="record-actions">
@@ -315,19 +299,40 @@ export default function AudioAnswer({ questionId, maxSeconds, locked, onBusyChan
       {(phase === 'recording' || phase === 'stopping') && <button type="button" className="stop-button" disabled={phase === 'stopping'} onClick={() => stop()}>{phase === 'stopping' ? 'Kayıt hazırlanıyor…' : 'Kaydı durdur'}</button>}
       {recording && !isBusy && <button type="button" className="secondary" disabled={locked} onClick={() => { clearPreview(); setPhase('idle'); setElapsed(0); setMessage('Ses kaydı silindi. Yanıt metni korundu.'); }}>Kaydı sil</button>}
     </div>
-    <p className="record-message" role="status">{message || (locked ? 'Başka bir soruda kayıt açık. Önce o kaydı tamamlayın.' : 'Kayıt başlatıldığında yalnızca mikrofon izni istenir.')}</p>
+    {message && <p className="record-message" role="status">{message}</p>}
+      {phase === 'recording' && <><label htmlFor={`input-level-${questionId}`}>Mikrofon giriş seviyesi</label><meter id={`input-level-${questionId}`} min={0} max={100} value={inputLevel} aria-label="Mikrofon giriş seviyesi" /><p role="status">{signalNotice}</p></>}
+    </div>
+    {autoTranscribe && <div className="speech-status" role="status"><strong>Otomatik metin</strong><p>{localNotice}</p>{recording && !isBusy && sessionToken && <button type="button" className="secondary" disabled={locked} onClick={() => transcribeAndSave(recording)}>Yerel metne çevirmeyi tekrar dene</button>}</div>}
+    <div className="recording-options">
+    <details className="microphone-settings">
+      <summary>Mikrofon ayarları</summary>
+      <label htmlFor={`microphone-${questionId}`}>Giriş mikrofonu</label>
+      <div className="microphone-controls"><select id={`microphone-${questionId}`} disabled={isBusy || locked} value={deviceId} onChange={event => setDeviceId(event.target.value)}><option value="">Sistem varsayılanı</option>{devices.map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Mikrofon ${index + 1}`}</option>)}</select><button type="button" className="secondary" disabled={isBusy || locked} onClick={listMicrophones}>Mikrofon listesini yenile</button></div>
+      {deviceNotice && <p>{deviceNotice}</p>}
+      {inputLabel && <p>Kayıtta kullanılan cihaz: <strong>{inputLabel}</strong></p>}
+    </details>
+    <details className="browser-preview" open={!autoTranscribe}><summary>Tarayıcıda canlı metin ayarları</summary>
+    <div className="transcript-option">
+      <label><input type="checkbox" checked={transcript.enabled} disabled={isBusy || locked || !transcript.supported} aria-describedby={`speech-info-${questionId}`} onChange={event => transcript.setEnabled(event.target.checked)} /> Tarayıcıyla canlı metin önizlemesi (isteğe bağlı)</label>
+      <p id={`speech-info-${questionId}`}>{transcript.supported ? 'İsteğe bağlıdır. Tarayıcının tanıma hizmeti sesi harici bir servise gönderebilir; internet gerekebilir. Kayıt başlamadan önce seçin.' : 'Bu tarayıcıda otomatik metin desteklenmiyor. Ses kaydedebilir ve yanıt metnini elle yazabilirsiniz.'}</p>
+    </div>
+    <div className="speech-status" role="status" aria-live="polite"><strong>Metne çevirme: {transcript.statusLabel}</strong><p>{transcript.notice}</p>
+      {phase === 'recording' && transcript.enabled && transcript.supported && <><button type="button" className="secondary" onClick={() => transcript.retry()}>Metne çevirmeyi tekrar başlat</button><p>Bu düğme Chrome'un varsayılan mikrofonuyla tanımayı yeniden başlatır; mevcut metin korunur.</p></>}
+    </div>
+    </details>
+    </div>
     {recording && !isBusy && <div className="record-preview">
       <audio ref={audio} controls preload="none" src={recording.url} aria-label={`Soru ${questionId} sesli yanıtı`} onPlay={() => { if (locked) audio.current?.pause(); }} onError={() => setMessage('Ses dosyası bu tarayıcıda oynatılamadı. Kaydı indirip açmayı deneyin veya daha uzun yeni bir kayıt oluşturun.')} />
       <div className="file-info"><span>{Math.max(1, Math.round(recording.duration))} sn · {(recording.bytes / 1024).toLocaleString('tr-TR', { maximumFractionDigits: 1 })} KB · {recording.mime.split(';')[0]}</span><a href={recording.url} download={`greenasync-soru-${questionId}.${extension}`}>Kaydı indir</a></div>
     </div>}
     <div className="transcript-editor">
       <label htmlFor={`transcript-${questionId}`}>Yanıt metni {transcript.listening && <span>· Canlı taslak</span>}</label>
-      <textarea id={`transcript-${questionId}`} value={transcript.text} readOnly={isBusy || locked} maxLength={12000} rows={5} placeholder="Otomatik metin burada görünür. Yanıtınızı elle de yazabilirsiniz." aria-describedby={`transcript-help-${questionId}`} onChange={event => transcript.setText(event.target.value)} />
-      <p id={`transcript-help-${questionId}`}>Kayıt sırasında metin düzenlenmez. Kaydı durdurduktan sonra sesinizi dinleyip hataları düzeltin. Yeniden kayıt başlarsa mevcut metin sıfırlanır.</p>
+      <textarea id={`transcript-${questionId}`} value={transcript.text} readOnly={isBusy || locked} maxLength={12000} rows={5} placeholder="Kayıt tamamlanınca metin burada görünür." aria-describedby={`transcript-help-${questionId}`} onChange={event => transcript.setText(event.target.value)} />
+      <p id={`transcript-help-${questionId}`}>Metni kontrol edip gerekiyorsa düzeltin. Yeniden kayıt başlatmak mevcut taslağı değiştirir.</p>
 
-      <div className="text-actions"><small>{transcript.text.length.toLocaleString('tr-TR')} karakter · Kaydetmeden önce geçici taslak</small><button type="button" className="secondary" disabled={isBusy || locked || !transcript.text} onClick={() => transcript.reset()}>Metni temizle</button></div>
+      <div className="text-actions"><small>{transcript.text.length.toLocaleString('tr-TR')} karakter</small><button type="button" className="secondary" disabled={isBusy || locked || !transcript.text} onClick={() => transcript.reset()}>Metni temizle</button></div>
     </div>
-    <div className="save-answer"><button type="button" disabled={isBusy || locked || !sessionToken || !transcript.text.trim() || (!recording && !savedAnswer)} onClick={save}>{saving ? 'Kaydediliyor…' : 'Yanıtı kaydet'}</button><p>Ses ve kontrol ettiğiniz metin birlikte kaydedilir. Kayıtlı yanıtın yalnızca metnini de güncelleyebilirsiniz.</p>
+    <div className="save-answer"><button type="button" disabled={isBusy || locked || !sessionToken || !transcript.text.trim() || (!recording && !savedAnswer)} onClick={save}>{saving ? 'Kaydediliyor…' : 'Yanıtı kaydet'}</button>
       {!sessionToken && <p>Kalıcı kayıt için backend’i başlatıp demo mülakatını yeniden açın.</p>}
       {saveNotice && <p role="status">{saveNotice}</p>}
     </div>
