@@ -1,0 +1,1 @@
+Merhaba, ben Ada Demir. Web uygulamaları geliştiriyorum. Özellikle bir ekranın yavaş bağlantıda nasıl çalıştığıyla ve sunucudan hangi veriyi ne zaman istediğiyle ilgileniyorum. Son dönemde erişilebilirlik üzerine de çalışıyorum. Bir formu yalnızca klavyeyle doldurabilmek gibi küçük görünen ayrıntıların, uygulamanın kimler tarafından kullanılabileceğini değiştirdiğini fark ettim.

@@ -10,6 +10,25 @@ type Row = { question_id: number; transcript: string; audio_name: string; audio_
 const selectFields = 'question_id, transcript, audio_name, audio_mime, audio_bytes, duration_seconds, updated_at';
 const format = (row: Row): Answer => ({ questionId: row.question_id, transcript: row.transcript, audioMime: row.audio_mime, audioBytes: row.audio_bytes, duration: row.duration_seconds, updatedAt: new Date(row.updated_at).toISOString() });
 const hash = (token: string) => createHash('sha256').update(token).digest('hex');
+const demoApplications = [
+  {
+    id: '52e3a9e6-4e37-4d59-8bf4-9d45e1b96828',
+    name: 'Deniz (sentetik demo)',
+    directory: 'synthetic-interview',
+    answers: [{ questionId: 2, transcriptFile: 'reference.txt', audioFile: 'yanit.webm', duration: 77.106 }],
+  },
+  {
+    id: '6484e7fc-0c06-4cee-9a47-30833a496627',
+    name: 'Ada Demir (sentetik demo)',
+    directory: 'ada-interview',
+    answers: [
+      { questionId: 1, transcriptFile: 'answer-1.txt', audioFile: 'answer-1.webm', duration: 31.773 },
+      { questionId: 2, transcriptFile: 'answer-2.txt', audioFile: 'answer-2.webm', duration: 36.168 },
+      { questionId: 3, transcriptFile: 'answer-3.txt', audioFile: 'answer-3.webm', duration: 35.506 },
+    ],
+  },
+];
+
 @Injectable()
 export class AnswerStore implements OnApplicationBootstrap {
   readonly directory = resolve(process.env.UPLOAD_DIR || join(__dirname, '../../uploads/audio'));
@@ -17,21 +36,24 @@ export class AnswerStore implements OnApplicationBootstrap {
   async onApplicationBootstrap() {
     if (process.env.GREENASYNC_CLASS_DEMO !== 'true' || this.db.mode !== 'embedded') return;
 
-    const applicationId = '52e3a9e6-4e37-4d59-8bf4-9d45e1b96828';
-    const questionId = 2;
-    const existing = await this.list(applicationId);
-    if (existing.some(answer => answer.questionId === questionId)) return;
+    for (const demo of demoApplications) {
+      const existing = await this.list(demo.id);
+      const missing = demo.answers.filter(answer => !existing.some(saved => saved.questionId === answer.questionId));
+      if (!missing.length) continue;
 
-    const sample = join(__dirname, '../../samples/synthetic-interview');
-    const [transcript, buffer] = await Promise.all([
-      readFile(join(sample, 'reference.txt'), 'utf8'),
-      readFile(join(sample, 'yanit.webm')),
-    ]);
-    await this.db.requirePool().query(
-      'INSERT INTO applications(id, token_hash, display_name) VALUES ($1,$2,$3) ON CONFLICT (id) DO NOTHING',
-      [applicationId, hash(randomBytes(32).toString('base64url')), 'Deniz (sentetik demo)'],
-    );
-    await this.save(applicationId, questionId, { transcript, duration: 77.106 }, { buffer, mimetype: 'audio/webm' });
+      const directory = join(__dirname, '../../samples', demo.directory);
+      await this.db.requirePool().query(
+        'INSERT INTO applications(id, token_hash, display_name) VALUES ($1,$2,$3) ON CONFLICT (id) DO NOTHING',
+        [demo.id, hash(randomBytes(32).toString('base64url')), demo.name],
+      );
+      for (const answer of missing) {
+        const [transcript, buffer] = await Promise.all([
+          readFile(join(directory, answer.transcriptFile), 'utf8'),
+          readFile(join(directory, answer.audioFile)),
+        ]);
+        await this.save(demo.id, answer.questionId, { transcript, duration: answer.duration }, { buffer, mimetype: 'audio/webm' });
+      }
+    }
   }
   async createSession(displayName = 'Demo aday') {
     if (typeof displayName !== 'string' || !displayName.trim() || displayName.trim().length > 80) throw new BadRequestException('Aday adı 1–80 karakter olmalı.');

@@ -87,12 +87,13 @@ reddederse yeni başvuru açılır. Kaydedilmeyen taslaklar sayfa yenilenince si
 
 `npm run dev:backend` ile başlatılan yerel sınıf demosunda **İK paneli**
 düğmesine basıp kullanıcı adı olarak `ik`, şifre olarak `1234` girin.
-Listede **Deniz (sentetik demo)** adlı örnek başvuru görünür. İkinci sorunun
-hazır metnini okuyabilir ve **Dinle** ile Türkçe sentetik sesi açabilirsiniz.
+Listede **Deniz (sentetik demo)** ve **Ada Demir (sentetik demo)** görünür.
+Deniz'in ikinci soruda, Ada'nın üç soruda da hazır yanıtı vardır. Metinleri
+okuyabilir ve **Dinle** ile Türkçe sentetik sesleri açabilirsiniz.
 Yeni başvuruları görmek için **Yenile** düğmesine basın. Bir aday seçtikten
 sonra **Önceki aday** ve **Sonraki aday** ile başvurular arasında geçin.
 Listede 20'den fazla başvuru varsa sayfa düğmeleri de görünür.
-Bu örnekte seslendirme için yazılan metin gösterilir. Canlı transkripsiyonu
+Bu örneklerde seslendirme için yazılan metinler gösterilir. Canlı transkripsiyonu
 göstermek için **Aday** bölümünden yeni bir kayıt yapın.
 
 Backend'i `npm run start:dev --workspace backend` ile başlatıyorsanız
